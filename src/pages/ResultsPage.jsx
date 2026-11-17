@@ -103,7 +103,7 @@ export default function ResultsPage() {
         {/* Action Buttons */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:14 }}>
           <button className="btn btn-secondary" onClick={()=>navigate('/game')}><RotateCcw size={16}/> Play Again</button>
-          <button className={`btn ${pal.btn}`} onClick={()=>navigate('/quiz-levels', { state:{ game } })}><BookOpen size={16}/> Take a Quiz</button>
+          <button className={`btn ${pal.btn}`} onClick={()=>navigate(game?.gameType==='verbatim3d' ? '/quiz' : '/quiz-levels', { state:{ game } })}><BookOpen size={16}/> Take a Quiz</button>
           <button className="btn" style={{ background:'white', color:'var(--text-secondary)', border:'2px solid var(--border)' }} onClick={()=>navigate(isBio?'/biology':'/chemistry')}><Home size={16}/> Done</button>
         </div>
       </div>

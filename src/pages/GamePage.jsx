@@ -6,6 +6,8 @@ import BackButton from '../components/BackButton';
 import AnswerExplanation from '../components/AnswerExplanation';
 import { getAdaptiveExplanation } from '../data/sampleGames';
 import { Lightbulb, ArrowLeft } from 'lucide-react';
+import { Lab3D } from '../verbatim/components/Lab3D.tsx';
+import { Electro3D } from '../verbatim/components/Electro3D.tsx';
 
 function MCQGame({ questions, onComplete, isBio, grade }) {
   const [idx, setIdx] = useState(0);
@@ -250,6 +252,23 @@ export default function GamePage() {
   const grade = user?.grade ? parseInt(user.grade) : 7;
 
   if (!currentGame) { navigate('/dashboard'); return null; }
+
+  if (currentGame.gameType === 'verbatim3d') {
+    const result = currentGame.verbatimResult;
+    const experiment = result?.electroExperiment || result?.experiment;
+    const isElectro = Boolean(result?.electroExperiment || result?.sceneKind === 'electro');
+    if (!experiment) return <div className="page" style={{ padding:32 }}><div className="card" style={{ padding:24 }}>This experiment is missing its 3D scene. Return to Chemistry and choose another lab.</div></div>;
+    const finish = ({ accuracy = 100, points = 0 }) => {
+      addGameXP(points);
+      addHistory({ type:'game', title:currentGame.title, subject:'chemistry', correct:Math.round(accuracy / 100 * (experiment.steps?.length || 1)), total:experiment.steps?.length || 1, xp:points });
+      navigate('/results', { state:{ results:[], correct:Math.round(accuracy / 100 * (experiment.steps?.length || 1)), total:experiment.steps?.length || 1, accuracy, xp:points, game:currentGame } });
+    };
+    return <div className="verbatim-game-shell">
+      {isElectro
+        ? <Electro3D experiment={experiment} onFinish={finish} onNewVideo={() => navigate('/chemistry')} onTakeQuiz={() => navigate('/quiz', { state:{ game:currentGame } })}/>
+        : <Lab3D experiment={experiment} onFinish={finish} onNewVideo={() => navigate('/chemistry')} onTakeQuiz={() => navigate('/quiz', { state:{ game:currentGame } })}/>}
+    </div>;
+  }
 
   const handleComplete = (results) => {
     const correct = results.filter(r=>r.correct).length;

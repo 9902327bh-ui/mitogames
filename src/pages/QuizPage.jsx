@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import Navbar from '../components/Navbar';
 import { Confetti } from '../components/FloatingObjects';
 import { CheckCircle, XCircle, ArrowLeft, RotateCcw, Home } from 'lucide-react';
+import { QuizScreen as VerbatimQuizScreen } from '../verbatim/components/QuizScreen.tsx';
 
 function buildQuizQuestions(game) {
   if (!game) return [];
@@ -84,9 +85,62 @@ export default function QuizPage() {
   const [results, setResults] = useState([]);
   const [done, setDone] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [verbatimQuiz, setVerbatimQuiz] = useState([]);
+  const [verbatimQuizLoading, setVerbatimQuizLoading] = useState(false);
+  const [verbatimQuizError, setVerbatimQuizError] = useState('');
 
   const game = location.state?.game;
+  const verbatimExperiment = game?.verbatimResult?.electroExperiment || game?.verbatimResult?.experiment;
+  useEffect(() => {
+    if (game?.gameType !== 'verbatim3d' || !verbatimExperiment) return;
+    if (verbatimExperiment.quiz?.length) {
+      setVerbatimQuiz(verbatimExperiment.quiz);
+      return;
+    }
+    let active = true;
+    setVerbatimQuizLoading(true);
+    fetch('/api/quiz', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body:JSON.stringify({
+        experimentTitle:verbatimExperiment.experimentTitle,
+        conceptSummary:verbatimExperiment.conceptSummary,
+        scienceNotes:verbatimExperiment.steps?.map(step=>step.scienceNote) || [],
+        sceneKind:game.verbatimResult.sceneKind === 'electro' || game.verbatimResult.electroExperiment ? 'electro' : 'reaction',
+      }),
+    }).then(async response => {
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'The bonus quiz could not be prepared.');
+      if (active) setVerbatimQuiz(Array.isArray(data.quiz) ? data.quiz : []);
+    }).catch(error => {
+      if (active) setVerbatimQuizError(error instanceof Error ? error.message : 'The bonus quiz could not be prepared.');
+    }).finally(() => { if (active) setVerbatimQuizLoading(false); });
+    return () => { active = false; };
+  }, [game?.gameType, game?.verbatimResult?.id]);
   if (!game) { navigate('/dashboard'); return null; }
+
+  if (game.gameType === 'verbatim3d') {
+    const result = game.verbatimResult;
+    const experiment = result?.electroExperiment || result?.experiment;
+    const quiz = verbatimQuiz;
+    if (!experiment) return <div className="page" style={{ padding:32 }}><div className="card" style={{ padding:24 }}>The experiment quiz is unavailable. Return to Chemistry to choose another lab.</div></div>;
+    return <div className="page verbatim-quiz" style={{ background:'linear-gradient(160deg,#F5F3FF,#F0F9FF)' }}>
+      <Navbar />
+      <div style={{ maxWidth:860, margin:'0 auto', padding:'24px 20px' }}>
+        <div className="card" style={{ padding:24, border:'2px solid rgba(139,92,246,.2)' }}>
+          {verbatimQuizLoading ? <div style={{ textAlign:'center', padding:32, color:'var(--text-secondary)' }}>Preparing your experiment bonus quiz…</div> : verbatimQuizError ? <div role="alert" style={{ textAlign:'center', padding:32, color:'var(--secondary)' }}>{verbatimQuizError}</div> : <VerbatimQuizScreen
+            experiment={experiment}
+            questions={quiz}
+            onCompleteQuiz={(bonus, correctCount) => {
+              addQuizXP(bonus);
+              addHistory({ type:'quiz', title:`${experiment.experimentTitle} Bonus Quiz`, subject:'chemistry', correct:correctCount, total:quiz.length, xp:bonus });
+            }}
+            onBackToLab={() => navigate('/game')}
+            onNewExperiment={() => navigate('/chemistry')}
+          />}
+        </div>
+      </div>
+    </div>;
+  }
 
   const questions = useMemo(() => buildQuizQuestions(game), [game]);
   const isBio = currentSubject === 'biology';

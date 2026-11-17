@@ -56,6 +56,8 @@ export default function ProfilePage() {
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               {[
                 { icon:'⚡', label:'Total XP', value:totalXP, color:'#6C63FF' },
+                { icon:'🎮', label:'Game XP', value:points.gameXP, color:'#22C55E' },
+                { icon:'🧠', label:'Quiz XP', value:points.quizXP, color:'#8B5CF6' },
                 { icon:'🎮', label:'Games Played', value:points.gamesPlayed, color:'#22C55E' },
                 { icon:'📝', label:'Quizzes Done', value:points.quizzesTaken, color:'#8B5CF6' },
                 { icon:'🏆', label:'Current Level', value:`Level ${level}`, color:'#FF9A3C' },

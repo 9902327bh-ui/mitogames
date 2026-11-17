@@ -1,3 +1,6 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
 :root {
   --primary: #6C63FF;
   --primary-light: #8B85FF;
@@ -146,10 +149,21 @@ body { font-family: var(--font-body); background: var(--bg-main); color: var(--t
 
 .page { min-height:100vh; position:relative; overflow-x:hidden; }
 
+.verbatim-game-shell { min-height:100dvh; height:100dvh; overflow:auto; padding:16px; background:linear-gradient(160deg,#F5F3FF,#F0F9FF); }
+.verbatim-game-shell > * { max-width:1440px; margin-inline:auto; }
+.verbatim-game-shell .verbatim-viewport { height:min(580px,calc(100dvh - 190px)); min-height:360px; }
+.verbatim-game-shell button, .verbatim-quiz button { transition:transform .16s ease, filter .16s ease; }
+.verbatim-game-shell button:hover, .verbatim-quiz button:hover { filter:brightness(1.08); }
+.verbatim-game-shell button:active, .verbatim-quiz button:active { transform:scale(.98); filter:brightness(.96); }
+.btn:active { transform:translateY(1px) scale(.98); box-shadow:0 2px 8px rgba(0,0,0,.14); }
+.btn:disabled { cursor:wait; opacity:.75; transform:none; box-shadow:none; }
+
 @media (prefers-reduced-motion: reduce) {
   *,*::before,*::after { animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; }
 }
 @media (max-width:768px) {
   .btn-lg { padding:14px 28px; font-size:1rem; }
   .float-obj { font-size:1.3rem; }
+  .verbatim-game-shell { padding:8px; }
+  .verbatim-game-shell .verbatim-viewport { height:min(500px,calc(100dvh - 170px)); min-height:330px; }
 }

@@ -1,10 +1,28 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import Navbar from '../components/Navbar';
 import { BioFloaters, ChemFloaters } from '../components/FloatingObjects';
 import { Search, Youtube, Zap, BookOpen, ChevronRight, AlertCircle } from 'lucide-react';
 import { TOPICS_BIOLOGY, TOPICS_CHEMISTRY, SAMPLE_BIOLOGY_GAMES, SAMPLE_CHEMISTRY_GAMES } from '../data/sampleGames';
+
+const API_CACHE_KEY = 'mg_chemistry_video_cache_v1';
+const extractYouTubeId = (value) => {
+  try {
+    const trimmed = value.trim();
+    const url = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    if (host === 'youtu.be') return url.pathname.split('/').filter(Boolean)[0] || '';
+    if (!['youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtube-nocookie.com'].includes(host)) return '';
+    if (url.pathname === '/watch') return url.searchParams.get('v') || '';
+    const [, kind, id] = url.pathname.split('/');
+    return ['shorts', 'live', 'embed', 'v'].includes(kind) ? id || '' : '';
+  } catch { return ''; }
+};
+
+function readVideoCache() {
+  try { return JSON.parse(localStorage.getItem(API_CACHE_KEY) || '{}'); } catch { return {}; }
+}
 
 const DIFF_COLOR = { Easy:'#22C55E', Medium:'#FF9A3C', Hard:'#EF4444' };
 
@@ -41,6 +59,20 @@ export default function SubjectDashboard({ subject = 'biology' }) {
   const [ytError, setYtError] = useState('');
   const [ytLoading, setYtLoading] = useState(false);
   const [search, setSearch] = useState('');
+  const [readyMade, setReadyMade] = useState([]);
+  const [loadingMessage, setLoadingMessage] = useState('');
+
+  useEffect(() => {
+    if (!isBio) {
+      fetch(`/api/experiments/ready-made?classLevel=${encodeURIComponent(user?.grade || 8)}`)
+        .then(async response => {
+          if (!response.ok) throw new Error('Ready-made experiments are unavailable.');
+          const data = await response.json();
+          setReadyMade(Array.isArray(data.experiments) ? data.experiments : []);
+        })
+        .catch(() => setReadyMade([]));
+    }
+  }, [isBio, user?.grade]);
 
   if (!user) { navigate('/login'); return null; }
 
@@ -52,20 +84,76 @@ export default function SubjectDashboard({ subject = 'biology' }) {
     t.desc.toLowerCase().includes(search.toLowerCase())
   );
 
-  const isYouTubeUrl = (url) => /youtube\.com\/watch|youtu\.be\//.test(url);
-
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!ytUrl.trim()) { setYtError('Please paste a YouTube URL first!'); return; }
-    if (!isYouTubeUrl(ytUrl)) { setYtError('That doesn\'t look like a YouTube link. Please paste a valid YouTube URL.'); return; }
+    const videoId = extractYouTubeId(ytUrl);
+    if (!videoId || !/^[\w-]{11}$/.test(videoId)) { setYtError('Enter a valid YouTube watch, youtu.be, Shorts, Live, or embed link.'); return; }
     setYtError('');
     setYtLoading(true);
     setCurrentSubject(subject);
-    setTimeout(() => {
+    if (isBio) {
+      window.setTimeout(() => {
+        setYtLoading(false);
+        const randomGame = sampleGames[Math.floor(Math.random() * sampleGames.length)];
+        setCurrentGame({ ...randomGame, fromYoutube: true, ytUrl });
+        navigate('/game-intro');
+      }, 3200);
+      return;
+    }
+    const cached = readVideoCache()[videoId];
+    if (cached?.result) {
       setYtLoading(false);
-      const randomGame = sampleGames[Math.floor(Math.random() * sampleGames.length)];
-      setCurrentGame({ ...randomGame, fromYoutube: true, ytUrl });
+      setCurrentGame({ title: cached.result.video?.title || 'Chemistry Video Lab', description: cached.result.summary, topic: 'YouTube Chemistry Lab', icon: '⚗️', difficulty: 'Interactive 3D Lab', gameType: 'verbatim3d', verbatimResult: cached.result, fromYoutube: true, ytUrl });
       navigate('/game-intro');
-    }, 3200);
+      return;
+    }
+    try {
+      const response = await fetch('/api/summarize/stream', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: ytUrl.trim(), length: 'standard', studentAge: 13, studentClass: `Class ${user?.grade || 8}` }),
+      });
+      const type = response.headers.get('content-type') || '';
+      if (!response.ok || !type.includes('text/event-stream')) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Could not process the YouTube video.');
+      }
+      setLoadingMessage('Checking the video and transcribing its chemistry lesson…');
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let finalResult = null;
+      let rejection = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const blocks = buffer.split('\n\n');
+        buffer = blocks.pop() || '';
+        for (const block of blocks) {
+          const event = block.match(/^event:\s*(.+)$/m)?.[1];
+          const raw = block.split('\n').find(line => line.startsWith('data:'))?.slice(5).trim();
+          if (!raw) continue;
+          const data = JSON.parse(raw);
+          if (event === 'metadata') setLoadingMessage(`Transcribing “${data.video?.title || 'your video'}”… this can take a minute.`);
+          if (event === 'stage' && data.stage === 'building_lab') setLoadingMessage('Transcript ready. Gemini is building your interactive 3D lab…');
+          if (event === 'not_chemistry') rejection = data.error || 'This video is not chemistry-related. Try a chemistry reaction or electrolysis video.';
+          if (event === 'error') throw new Error(data.error || 'The lab could not be generated.');
+          if (event === 'done') finalResult = data.result;
+        }
+      }
+      if (rejection) throw new Error(rejection);
+      if (!finalResult) throw new Error('The experiment stream ended before the lab was ready.');
+      const cache = readVideoCache();
+      cache[videoId] = { result: finalResult, savedAt: Date.now() };
+      try { localStorage.setItem(API_CACHE_KEY, JSON.stringify(cache)); } catch { /* Continue with the result if browser storage is full. */ }
+      setCurrentGame({ title: finalResult.video?.title || 'Chemistry Video Lab', description: finalResult.summary, topic: 'YouTube Chemistry Lab', icon: '⚗️', difficulty: 'Interactive 3D Lab', gameType: 'verbatim3d', verbatimResult: finalResult, fromYoutube: true, ytUrl });
+      navigate('/game-intro');
+    } catch (error) {
+      setYtError(error instanceof Error ? error.message : 'The experiment could not be generated.');
+    } finally {
+      setYtLoading(false);
+      setLoadingMessage('');
+    }
   };
 
   const handleTopicStart = (topic) => {
@@ -123,9 +211,7 @@ export default function SubjectDashboard({ subject = 'biology' }) {
               </div>
             </div>
 
-            <div style={{ background:'#FFF5F5', border:'2px dashed #FFB3B3', borderRadius:12, padding:'12px 14px', marginBottom:16, fontSize:'.8rem', color:'#991B1B' }}>
-              ⚠️ Demo mode: AI generation is simulated with sample content.
-            </div>
+            {!isBio && <div style={{ background:'#F5F3FF', border:'1px solid #DDD6FE', borderRadius:12, padding:'12px 14px', marginBottom:16, fontSize:'.8rem', color:'#5B21B6' }}>Paste a chemistry video. We’ll transcribe it, check its topic, and build a playable lab.</div>}
 
             <div style={{ position:'relative', marginBottom:12 }}>
               <input
@@ -139,7 +225,7 @@ export default function SubjectDashboard({ subject = 'biology' }) {
             </div>
 
             {ytError && (
-              <div style={{ display:'flex', alignItems:'center', gap:6, color:'var(--secondary)', fontSize:'.83rem', fontWeight:600, marginBottom:12 }}>
+              <div role="alert" style={{ display:'flex', alignItems:'center', gap:6, color:'var(--secondary)', fontSize:'.83rem', fontWeight:600, marginBottom:12 }}>
                 <AlertCircle size={15}/> {ytError}
               </div>
             )}
@@ -153,7 +239,7 @@ export default function SubjectDashboard({ subject = 'biology' }) {
               {ytLoading ? (
                 <span style={{ display:'flex', alignItems:'center', gap:10 }}>
                   <span style={{ width:16, height:16, border:'2px solid rgba(255,255,255,.4)', borderTopColor:'white', borderRadius:'50%', display:'inline-block', animation:'spinSlow .7s linear infinite' }}/>
-                  Generating your game...
+                  {loadingMessage || 'Connecting to the lab engine…'}
                 </span>
               ) : (
                 <><Zap size={16}/> Generate Game!</>
@@ -187,6 +273,28 @@ export default function SubjectDashboard({ subject = 'biology' }) {
             </div>
           </div>
         </div>
+
+        {!isBio && <section style={{ marginBottom:36 }}>
+          <h2 style={{ fontFamily:'var(--font-heading)', fontSize:'1.3rem', marginBottom:16, color:'var(--text-primary)' }}>🧪 Ready-made experiments</h2>
+          {readyMade.length ? <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))', gap:18 }}>
+            {readyMade.map(item => {
+              const result = item.result || item;
+              const electro = Boolean(result.electroExperiment || result.sceneKind === 'electro' || item.sceneKind === 'electro');
+              const experiment = result.electroExperiment || result.experiment;
+              return <button key={item.id} className="card" onClick={() => {
+                if (!experiment) return;
+                setCurrentSubject('chemistry');
+                setCurrentGame({ title: item.title || experiment.experimentTitle, description: result.summary || experiment.conceptSummary, topic: item.subtitle || 'Chemistry Lab', icon: electro ? '🔋' : '⚗️', difficulty: experiment.difficulty || 'Interactive 3D Lab', gameType: 'verbatim3d', verbatimResult: result, readyMade: true });
+                navigate('/game-intro');
+              }} style={{ padding:20, textAlign:'left', cursor:'pointer', border:`2px solid ${item.accentColor || '#8B5CF6'}33`, borderTop:`5px solid ${item.accentColor || '#8B5CF6'}` }}>
+                <span className="chip" style={{ background:'#EDE9FE', color:'#6D28D9', marginBottom:10 }}>{item.classBadge || `Class ${item.minClass}–${item.maxClass}`}</span>
+                <h3 style={{ fontFamily:'var(--font-heading)', marginBottom:6 }}>{item.title || experiment?.experimentTitle}</h3>
+                <p style={{ color:'var(--text-secondary)', fontSize:'.84rem', lineHeight:1.5, marginBottom:14 }}>{item.subtitle || result.summary}</p>
+                <span style={{ fontSize:'.82rem', fontWeight:800, color:'#6D28D9' }}>{electro ? 'Launch Electro3D →' : 'Launch Lab3D →'}</span>
+              </button>;
+            })}
+          </div> : <p style={{ color:'var(--text-secondary)' }}>Loading experiments…</p>}
+        </section>}
 
         {/* Topics Grid */}
         <h2 style={{ fontFamily:'var(--font-heading)', fontSize:'1.3rem', marginBottom:18, color:'var(--text-primary)' }}>

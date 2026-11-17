@@ -83,11 +83,11 @@ function LoadingScreen({ subject }) {
 export default function GameIntro() {
   const { currentGame, currentSubject } = useApp();
   const navigate = useNavigate();
-  const [showLoading, setShowLoading] = useState(!!(currentGame?.fromYoutube));
+  const [showLoading, setShowLoading] = useState(!!(currentGame?.fromYoutube && !currentGame?.verbatimResult));
 
   useEffect(() => {
     if (!currentGame) { navigate('/dashboard'); return; }
-    if (currentGame?.fromYoutube) {
+    if (currentGame?.fromYoutube && !currentGame?.verbatimResult) {
       const t = setTimeout(() => setShowLoading(false), 3200);
       return () => clearTimeout(t);
     }
