@@ -581,9 +581,17 @@ export const Electro3D: React.FC<Electro3DProps> = ({
     // 1. Center cells / lemons
     centers.forEach((c, idx) => {
       const n = centers.length;
-      const spread = n > 1 ? 1.38 : 0;
-      const x = n === 1 ? 0 : (idx - (n - 1) / 2) * spread;
-      layoutPosMap.set(c.id, new THREE.Vector3(x, 0, -0.08));
+      if (n > 3) {
+        const columns = 3;
+        const row = Math.floor(idx / columns);
+        const rowCount = Math.min(columns, n - row * columns);
+        const x = (idx % columns - (rowCount - 1) / 2) * 1.35;
+        layoutPosMap.set(c.id, new THREE.Vector3(x, 0, -0.12 + row * 0.68));
+      } else {
+        const spread = n > 1 ? 1.55 : 0;
+        const x = n === 1 ? 0 : (idx - (n - 1) / 2) * spread;
+        layoutPosMap.set(c.id, new THREE.Vector3(x, 0, -0.08));
+      }
     });
 
     // 2. Upper/left bench apparatus
@@ -597,7 +605,12 @@ export const Electro3D: React.FC<Electro3DProps> = ({
     ];
     metersAndLoads.forEach((c, idx) => {
       const slot = upperSlots[idx % upperSlots.length].clone();
-      if (idx >= upperSlots.length) slot.x += 0.45 * (idx - upperSlots.length + 1);
+      if (metersAndLoads.length > upperSlots.length) {
+        const row = Math.floor(idx / upperSlots.length);
+        slot.z += row * 0.62;
+      } else if (idx >= upperSlots.length) {
+        slot.x += 0.45 * (idx - upperSlots.length + 1);
+      }
       layoutPosMap.set(c.id, slot);
     });
 
@@ -606,7 +619,15 @@ export const Electro3D: React.FC<Electro3DProps> = ({
     const stageStartX = -Math.min(2.1, (stageCount - 1) * 0.46);
     const stageStepX = stageCount > 1 ? Math.min(3.5, (stageCount - 1) * 0.9) / (stageCount - 1) : 0;
     stagingItems.forEach((c, idx) => {
-      layoutPosMap.set(c.id, new THREE.Vector3(stageStartX + idx * stageStepX, 0, 0.88));
+      if (stageCount > 5) {
+        const columns = 5;
+        const row = Math.floor(idx / columns);
+        const rowCount = Math.min(columns, stageCount - row * columns);
+        const x = (idx % columns - (rowCount - 1) / 2) * 0.92;
+        layoutPosMap.set(c.id, new THREE.Vector3(x, 0, 0.72 + row * 0.58));
+      } else {
+        layoutPosMap.set(c.id, new THREE.Vector3(stageStartX + idx * stageStepX, 0, 0.88));
+      }
     });
 
     const clickableMeshes: THREE.Object3D[] = [gbHit];

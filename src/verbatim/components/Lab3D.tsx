@@ -452,13 +452,19 @@ export const Lab3D: React.FC<Lab3DProps> = ({
     const count = experiment.vessels.length;
     const startX = -Math.min(1.55, (count - 1) * 0.44);
     const stepX = count > 1 ? (Math.min(2.75, (count - 1) * 0.92)) / (count - 1) : 0;
+    const useSpaciousRows = count > 4;
+    const rowColumns = 4;
 
     experiment.vessels.forEach((v, idx) => {
       const shapeInfo = createVesselGeometry(v.vesselType);
       const group = new THREE.Group();
 
-      const xPos = startX + idx * stepX;
-      const zPos = v.role === 'workspace' ? 0.56 : idx % 2 === 0 ? 0.08 : 0.28;
+      const xPos = useSpaciousRows
+        ? ((idx % rowColumns) - (Math.min(rowColumns, count - Math.floor(idx / rowColumns) * rowColumns) - 1) / 2) * 1.02
+        : startX + idx * stepX;
+      const zPos = useSpaciousRows
+        ? Math.floor(idx / rowColumns) * 0.72 + (v.role === 'workspace' ? 0.48 : 0.06)
+        : v.role === 'workspace' ? 0.56 : idx % 2 === 0 ? 0.08 : 0.28;
       const basePos = new THREE.Vector3(xPos, 0, zPos);
       group.position.copy(basePos);
 
