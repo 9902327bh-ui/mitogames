@@ -4,21 +4,35 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -k -n api,web \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "node --import tsx server/verbatim.ts",
+    "dev:web": "vite",
+    "lint": "eslint src",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/genai": "^3.4.0",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "framer-motion": "^11.0.3",
+    "lucide-react": "^0.344.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.0",
-    "framer-motion": "^11.0.3",
-    "lucide-react": "^0.344.0"
+    "three": "^0.187.0"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/express": "^5.0.6",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
+    "@typescript-eslint/parser": "^8.73.0",
     "@vitejs/plugin-react": "^4.2.1",
+    "concurrently": "^10.0.7",
+    "eslint": "^10.15.0",
+    "tailwindcss": "^4.3.5",
+    "tsx": "^4.23.15",
     "vite": "^5.1.0"
   }
 }
