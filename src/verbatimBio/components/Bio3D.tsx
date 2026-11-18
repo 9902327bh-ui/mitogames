@@ -14,6 +14,11 @@ import {
 } from 'lucide-react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import {
+  createBiologyRenderPipeline,
+  createContactShadowResources,
+  disposeSceneResources,
+} from '../../three/render.ts';
 import type { ItemKind, StepAction } from '../constants/bioEnums.ts';
 import { createLabRoom, type LabRoomHandle } from '../three/LabRoom.ts';
 import { buildLabItemModel } from '../three/models/index.ts';
@@ -1469,6 +1474,11 @@ export const Bio3D: React.FC<Bio3DProps> = ({
     const tweens = new TweenManager();
     const dolly = new CameraDollyController(camera, controls);
     const particles = new LabParticleSystem();
+    const renderPipeline = createBiologyRenderPipeline(renderer, scene, camera, {
+      isSoftwareGl,
+      onQualityChange: (quality) => particles.setQuality(quality),
+    });
+    const contactShadows = createContactShadowResources();
     scene.add(particles.mesh);
 
     // Build bench items from experiment + Step 0 safety gear box
@@ -1493,6 +1503,7 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       });
       const pos = basePositions.get(item.id) ?? new THREE.Vector3(0, 0, 0);
       grp.position.copy(pos);
+      contactShadows.attach(grp);
       scene.add(grp);
       itemGroups.set(item.id, grp);
 
@@ -1833,7 +1844,7 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       const h = container.clientHeight || 560;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
+      renderPipeline.resize(w, h);
     };
     window.addEventListener('resize', onResize);
 
@@ -1853,6 +1864,7 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       tweens.update(dt);
       room.update(timeSec);
       particles.update(dt, timeSec);
+      renderPipeline.update(dt);
 
       // Update floating target arrow + ground ring above ONLY the active interactive object
       const curPhase = phaseRef.current;
@@ -1990,7 +2002,7 @@ export const Bio3D: React.FC<Bio3DProps> = ({
         });
       }
 
-      renderer.render(scene, camera);
+      renderPipeline.render();
       rafId = requestAnimationFrame(tick);
     };
 
@@ -2006,13 +2018,9 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       controls.dispose();
       particles.dispose();
       room.dispose();
-      scene.traverse((obj) => {
-        if (obj instanceof THREE.Mesh) {
-          obj.geometry.dispose();
-          if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose());
-          else obj.material.dispose();
-        }
-      });
+      renderPipeline.dispose();
+      contactShadows.dispose();
+      disposeSceneResources(scene);
       renderer.dispose();
     };
   }, [allItemsWithSafety, experiment, playStepAnimation, showToast]);

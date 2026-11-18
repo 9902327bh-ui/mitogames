@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { RenderQuality } from '../../three/render.ts';
 
 export type ParticleKind =
   | 'bubble'
@@ -28,6 +29,8 @@ export class LabParticleSystem {
   private cursor = 0;
   private readonly dummy = new THREE.Object3D();
   private readonly tmpColor = new THREE.Color();
+  private activeCapacity = POOL_SIZE;
+  private lowQuality = false;
 
   constructor() {
     const geom = new THREE.SphereGeometry(0.032, 10, 10);
@@ -69,9 +72,9 @@ export class LabParticleSystem {
     spread = 0.08,
     hexColor?: number,
   ): void {
-    for (let n = 0; n < count; n++) {
-      const idx = this.cursor;
-      this.cursor = (this.cursor + 1) % POOL_SIZE;
+    for (let n = 0; n < Math.min(count, this.activeCapacity); n++) {
+      const idx = this.cursor % this.activeCapacity;
+      this.cursor = (this.cursor + 1) % this.activeCapacity;
       const slot = this.slots[idx];
       slot.active = true;
       slot.kind = kind;
@@ -134,6 +137,14 @@ export class LabParticleSystem {
     for (let i = 0; i < POOL_SIZE; i++) {
       const slot = this.slots[i];
       if (!slot.active) continue;
+      if (i >= this.activeCapacity) {
+        slot.active = false;
+        this.dummy.scale.set(0, 0, 0);
+        this.dummy.updateMatrix();
+        this.mesh.setMatrixAt(i, this.dummy.matrix);
+        anyUpdated = true;
+        continue;
+      }
       anyUpdated = true;
       slot.age += dt;
       if (slot.age >= slot.life) {
@@ -169,6 +180,18 @@ export class LabParticleSystem {
     if (anyUpdated) {
       this.mesh.instanceMatrix.needsUpdate = true;
     }
+  }
+
+  setQuality(quality: RenderQuality): void {
+    const low = quality === 'low';
+    this.activeCapacity = low ? 64 : quality === 'medium' ? 120 : POOL_SIZE;
+    if (low === this.lowQuality) return;
+    this.lowQuality = low;
+    const previous = this.mesh.material as THREE.Material;
+    this.mesh.material = low
+      ? new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.84, vertexColors: true, depthWrite: false })
+      : new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.18, metalness: 0.05, transparent: true, opacity: 0.88 });
+    previous.dispose();
   }
 
   dispose(): void {
