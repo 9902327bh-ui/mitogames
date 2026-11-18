@@ -152,6 +152,7 @@ body { font-family: var(--font-body); background: var(--bg-main); color: var(--t
 .verbatim-game-shell { min-height:100dvh; height:100dvh; overflow:auto; padding:16px; background:linear-gradient(160deg,#F5F3FF,#F0F9FF); }
 .verbatim-game-shell > * { max-width:1440px; margin-inline:auto; }
 .verbatim-game-shell .verbatim-viewport { height:max(360px,calc(100dvh - 110px)); min-height:360px; }
+.verbatim-bio-game-shell [data-lab-canvas-stage] { height:max(360px,calc(100dvh - 110px)); }
 .verbatim-game-shell button, .verbatim-quiz button { transition:transform .16s ease, filter .16s ease; }
 .verbatim-game-shell button:hover, .verbatim-quiz button:hover { filter:brightness(1.08); }
 .verbatim-game-shell button:active, .verbatim-quiz button:active { transform:scale(.98); filter:brightness(.96); }
@@ -166,4 +167,5 @@ body { font-family: var(--font-body); background: var(--bg-main); color: var(--t
   .float-obj { font-size:1.3rem; }
   .verbatim-game-shell { padding:8px; }
   .verbatim-game-shell .verbatim-viewport { height:max(330px,calc(100dvh - 150px)); min-height:330px; }
+  .verbatim-bio-game-shell [data-lab-canvas-stage] { height:max(330px,calc(100dvh - 150px)); }
 }

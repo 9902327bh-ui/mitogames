@@ -28,6 +28,7 @@ import type {
 } from '../src/verbatim/types.ts';
 import { parseStructuredPlainText } from '../src/verbatim/utils/parseStreamSummary.ts';
 import { READY_MADE_EXPERIMENTS } from './readyMadeExperiments.ts';
+import { registerBiologyRoutes } from './bio/routes.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1387,6 +1388,7 @@ async function generateElectroFromTranscript(
 async function startServer() {
   const app = express();
   app.use(express.json({ limit: '1mb' }));
+  registerBiologyRoutes(app);
 
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true });

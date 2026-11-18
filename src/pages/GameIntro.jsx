@@ -83,11 +83,11 @@ function LoadingScreen({ subject }) {
 export default function GameIntro() {
   const { currentGame, currentSubject } = useApp();
   const navigate = useNavigate();
-  const [showLoading, setShowLoading] = useState(!!(currentGame?.fromYoutube && !currentGame?.verbatimResult));
+  const [showLoading, setShowLoading] = useState(!!(currentGame?.fromYoutube && !currentGame?.verbatimResult && !currentGame?.verbatimBioExperiment));
 
   useEffect(() => {
     if (!currentGame) { navigate('/dashboard'); return; }
-    if (currentGame?.fromYoutube && !currentGame?.verbatimResult) {
+    if (currentGame?.fromYoutube && !currentGame?.verbatimResult && !currentGame?.verbatimBioExperiment) {
       const t = setTimeout(() => setShowLoading(false), 3200);
       return () => clearTimeout(t);
     }

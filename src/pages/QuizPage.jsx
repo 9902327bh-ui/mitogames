@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import { Confetti } from '../components/FloatingObjects';
 import { CheckCircle, XCircle, ArrowLeft, RotateCcw, Home } from 'lucide-react';
 import { QuizScreen as VerbatimQuizScreen } from '../verbatim/components/QuizScreen.tsx';
+import { QuizScreen as VerbatimBioQuizScreen } from '../verbatimBio/components/QuizScreen.tsx';
 
 function buildQuizQuestions(game) {
   if (!game) return [];
@@ -137,6 +138,28 @@ export default function QuizPage() {
             onBackToLab={() => navigate('/game')}
             onNewExperiment={() => navigate('/chemistry')}
           />}
+        </div>
+      </div>
+    </div>;
+  }
+
+  if (game.gameType === 'verbatimBio3d') {
+    const experiment = game.verbatimBioExperiment;
+    if (!experiment) return <div className="page" style={{ padding:32 }}><div className="card" style={{ padding:24 }}>The Biology quiz is unavailable. Return to Biology and choose another lab.</div></div>;
+    return <div className="page verbatim-quiz" style={{ background:'linear-gradient(160deg,#F0FFF4,#F8F7FF)' }}>
+      <Navbar />
+      <div style={{ maxWidth:900, margin:'0 auto', padding:'24px 20px' }}>
+        <div className="card" style={{ padding:24, border:'2px solid rgba(34,197,94,.2)' }}>
+          <VerbatimBioQuizScreen
+            experiment={experiment}
+            classLevel={Number(user?.grade) || 8}
+            onAwardQuizPoints={(bonus) => {
+              addQuizXP(bonus);
+              addHistory({ type:'quiz', title:`${experiment.experimentTitle} Bonus Quiz`, subject:'biology', correct:0, total:experiment.quiz?.length || 0, xp:bonus });
+            }}
+            onBackToLab={() => navigate('/game')}
+            onNewExperiment={() => navigate('/biology')}
+          />
         </div>
       </div>
     </div>;

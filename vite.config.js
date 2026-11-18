@@ -10,6 +10,7 @@ export default defineConfig({
       '/api/experiments': 'http://localhost:3001',
       '/api/summarize': 'http://localhost:3001',
       '/api/quiz': 'http://localhost:3001',
+      '/api/biology': 'http://localhost:3001',
     },
   },
 })

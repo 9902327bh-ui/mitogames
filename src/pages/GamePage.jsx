@@ -8,6 +8,7 @@ import { getAdaptiveExplanation } from '../data/sampleGames';
 import { Lightbulb, ArrowLeft } from 'lucide-react';
 import { Lab3D } from '../verbatim/components/Lab3D.tsx';
 import { Electro3D } from '../verbatim/components/Electro3D.tsx';
+import { Bio3D } from '../verbatimBio/components/Bio3D.tsx';
 
 function MCQGame({ questions, onComplete, isBio, grade }) {
   const [idx, setIdx] = useState(0);
@@ -267,6 +268,25 @@ export default function GamePage() {
       {isElectro
         ? <Electro3D experiment={experiment} onFinish={finish} onNewVideo={() => navigate('/chemistry')} onTakeQuiz={() => navigate('/quiz', { state:{ game:currentGame } })}/>
         : <Lab3D experiment={experiment} onFinish={finish} onNewVideo={() => navigate('/chemistry')} onTakeQuiz={() => navigate('/quiz', { state:{ game:currentGame } })}/>}
+    </div>;
+  }
+
+  if (currentGame.gameType === 'verbatimBio3d') {
+    const experiment = currentGame.verbatimBioExperiment;
+    if (!experiment) return <div className="page" style={{ padding:32 }}><div className="card" style={{ padding:24 }}>This Biology lab is missing its experiment data. Return to Biology and choose another lab.</div></div>;
+    return <div className="verbatim-game-shell verbatim-bio-game-shell">
+      <Bio3D
+        experiment={experiment}
+        studentBadges={[]}
+        onMissionComplete={(result) => {
+          const xp = result.labPointsAwarded || 0;
+          addGameXP(xp);
+          addHistory({ type:'game', title:experiment.experimentTitle, subject:'biology', correct:result.rightClicks, total:result.rightClicks + result.wrongClicks, xp });
+          navigate('/results', { state:{ results:[], correct:result.rightClicks, total:result.rightClicks + result.wrongClicks, accuracy:result.accuracyPct, xp, game:currentGame } });
+        }}
+        onGoToQuiz={() => navigate('/quiz', { state:{ game:currentGame } })}
+        onNextVideo={() => navigate('/biology')}
+      />
     </div>;
   }
 

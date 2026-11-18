@@ -7,6 +7,7 @@ import { Search, Youtube, Zap, BookOpen, ChevronRight, AlertCircle } from 'lucid
 import { TOPICS_BIOLOGY, TOPICS_CHEMISTRY, SAMPLE_BIOLOGY_GAMES, SAMPLE_CHEMISTRY_GAMES } from '../data/sampleGames';
 
 const API_CACHE_KEY = 'mg_chemistry_video_cache_v1';
+const BIO_CACHE_KEY = 'mg_biology_video_cache_v1';
 const extractYouTubeId = (value) => {
   try {
     const trimmed = value.trim();
@@ -20,8 +21,8 @@ const extractYouTubeId = (value) => {
   } catch { return ''; }
 };
 
-function readVideoCache() {
-  try { return JSON.parse(localStorage.getItem(API_CACHE_KEY) || '{}'); } catch { return {}; }
+function readVideoCache(key = API_CACHE_KEY) {
+  try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch { return {}; }
 }
 
 const DIFF_COLOR = { Easy:'#22C55E', Medium:'#FF9A3C', Hard:'#EF4444' };
@@ -64,7 +65,7 @@ export default function SubjectDashboard({ subject = 'biology' }) {
 
   useEffect(() => {
     if (!isBio) {
-      fetch(`/api/experiments/ready-made?classLevel=${encodeURIComponent(user?.grade || 8)}`)
+      fetch(`${isBio ? '/api/biology/experiments/ready-made' : '/api/experiments/ready-made'}?classLevel=${encodeURIComponent(user?.grade || 8)}`)
         .then(async response => {
           if (!response.ok) throw new Error('Ready-made experiments are unavailable.');
           const data = await response.json();
@@ -91,26 +92,22 @@ export default function SubjectDashboard({ subject = 'biology' }) {
     setYtError('');
     setYtLoading(true);
     setCurrentSubject(subject);
-    if (isBio) {
-      window.setTimeout(() => {
-        setYtLoading(false);
-        const randomGame = sampleGames[Math.floor(Math.random() * sampleGames.length)];
-        setCurrentGame({ ...randomGame, fromYoutube: true, ytUrl });
-        navigate('/game-intro');
-      }, 3200);
-      return;
-    }
-    const cached = readVideoCache()[videoId];
+    const cacheKey = isBio ? BIO_CACHE_KEY : API_CACHE_KEY;
+    const cached = readVideoCache(cacheKey)[videoId];
     if (cached?.result) {
       setYtLoading(false);
-      setCurrentGame({ title: cached.result.video?.title || 'Chemistry Video Lab', description: cached.result.summary, topic: 'YouTube Chemistry Lab', icon: '⚗️', difficulty: 'Interactive 3D Lab', gameType: 'verbatim3d', verbatimResult: cached.result, fromYoutube: true, ytUrl });
+      setCurrentGame(isBio
+        ? { title:cached.result.videoMeta?.title || 'Biology Video Lab', description:cached.result.summary?.overview || '', topic:'YouTube Biology Lab', icon:'🧬', difficulty:'Interactive 3D Lab', gameType:'verbatimBio3d', verbatimBioExperiment:cached.result.experiment, verbatimBioResult:cached.result, fromYoutube:true }
+        : { title: cached.result.video?.title || 'Chemistry Video Lab', description: cached.result.summary, topic: 'YouTube Chemistry Lab', icon: '⚗️', difficulty: 'Interactive 3D Lab', gameType: 'verbatim3d', verbatimResult: cached.result, fromYoutube: true, ytUrl });
       navigate('/game-intro');
       return;
     }
     try {
-      const response = await fetch('/api/summarize/stream', {
+      const response = await fetch(isBio ? '/api/biology/summarize/stream' : '/api/summarize/stream', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: ytUrl.trim(), length: 'standard', studentAge: 13, studentClass: `Class ${user?.grade || 8}` }),
+        body: JSON.stringify(isBio
+          ? { url:ytUrl.trim(), summaryLength:'standard', classLevel:Number(user?.grade) || 8 }
+          : { url: ytUrl.trim(), length: 'standard', studentAge: 13, studentClass: `Class ${user?.grade || 8}` }),
       });
       const type = response.headers.get('content-type') || '';
       if (!response.ok || !type.includes('text/event-stream')) {
@@ -134,19 +131,25 @@ export default function SubjectDashboard({ subject = 'biology' }) {
           const raw = block.split('\n').find(line => line.startsWith('data:'))?.slice(5).trim();
           if (!raw) continue;
           const data = JSON.parse(raw);
-          if (event === 'metadata') setLoadingMessage(`Transcribing “${data.video?.title || 'your video'}”… this can take a minute.`);
-          if (event === 'stage' && data.stage === 'building_lab') setLoadingMessage('Transcript ready. Gemini is building your interactive 3D lab…');
+          if (event === 'metadata' || event === 'meta') setLoadingMessage(`Transcribing “${data.video?.title || data.videoMeta?.title || 'your video'}”… this can take a minute.`);
+          if (event === 'stage') setLoadingMessage(data.stage || 'Gemini is building your interactive lab…');
           if (event === 'not_chemistry') rejection = data.error || 'This video is not chemistry-related. Try a chemistry reaction or electrolysis video.';
           if (event === 'error') throw new Error(data.error || 'The lab could not be generated.');
           if (event === 'done') finalResult = data.result;
+          if (event === 'complete') finalResult = data;
         }
       }
       if (rejection) throw new Error(rejection);
       if (!finalResult) throw new Error('The experiment stream ended before the lab was ready.');
-      const cache = readVideoCache();
+      if (isBio && !finalResult.experiment?.isBiology) {
+        throw new Error(finalResult.experiment?.rejectionReason || 'This video does not appear to be about Biology. Please try a Biology lesson.');
+      }
+      const cache = readVideoCache(cacheKey);
       cache[videoId] = { result: finalResult, savedAt: Date.now() };
-      try { localStorage.setItem(API_CACHE_KEY, JSON.stringify(cache)); } catch { /* Continue with the result if browser storage is full. */ }
-      setCurrentGame({ title: finalResult.video?.title || 'Chemistry Video Lab', description: finalResult.summary, topic: 'YouTube Chemistry Lab', icon: '⚗️', difficulty: 'Interactive 3D Lab', gameType: 'verbatim3d', verbatimResult: finalResult, fromYoutube: true, ytUrl });
+      try { localStorage.setItem(cacheKey, JSON.stringify(cache)); } catch { /* Continue with the result if browser storage is full. */ }
+      setCurrentGame(isBio
+        ? { title:finalResult.videoMeta?.title || 'Biology Video Lab', description:finalResult.summary?.overview || '', topic:'YouTube Biology Lab', icon:'🧬', difficulty:'Interactive 3D Lab', gameType:'verbatimBio3d', verbatimBioExperiment:finalResult.experiment, verbatimBioResult:finalResult, fromYoutube:true }
+        : { title: finalResult.video?.title || 'Chemistry Video Lab', description: finalResult.summary, topic: 'YouTube Chemistry Lab', icon: '⚗️', difficulty: 'Interactive 3D Lab', gameType: 'verbatim3d', verbatimResult: finalResult, fromYoutube: true, ytUrl });
       navigate('/game-intro');
     } catch (error) {
       setYtError(error instanceof Error ? error.message : 'The experiment could not be generated.');
@@ -274,27 +277,29 @@ export default function SubjectDashboard({ subject = 'biology' }) {
           </div>
         </div>
 
-        {!isBio && <section style={{ marginBottom:36 }}>
-          <h2 style={{ fontFamily:'var(--font-heading)', fontSize:'1.3rem', marginBottom:16, color:'var(--text-primary)' }}>🧪 Ready-made experiments</h2>
+        <section style={{ marginBottom:36 }}>
+          <h2 style={{ fontFamily:'var(--font-heading)', fontSize:'1.3rem', marginBottom:16, color:'var(--text-primary)' }}>{isBio ? '🌿 Ready-made Biology labs' : '🧪 Ready-made experiments'}</h2>
           {readyMade.length ? <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))', gap:18 }}>
             {readyMade.map(item => {
               const result = item.result || item;
-              const electro = Boolean(result.electroExperiment || result.sceneKind === 'electro' || item.sceneKind === 'electro');
-              const experiment = result.electroExperiment || result.experiment;
+              const electro = !isBio && Boolean(result.electroExperiment || result.sceneKind === 'electro' || item.sceneKind === 'electro');
+              const experiment = isBio ? item.experiment : result.electroExperiment || result.experiment;
               return <button key={item.id} className="card" onClick={() => {
                 if (!experiment) return;
-                setCurrentSubject('chemistry');
-                setCurrentGame({ title: item.title || experiment.experimentTitle, description: result.summary || experiment.conceptSummary, topic: item.subtitle || 'Chemistry Lab', icon: electro ? '🔋' : '⚗️', difficulty: experiment.difficulty || 'Interactive 3D Lab', gameType: 'verbatim3d', verbatimResult: result, readyMade: true });
+                setCurrentSubject(isBio ? 'biology' : 'chemistry');
+                setCurrentGame(isBio
+                  ? { title:experiment.experimentTitle, description:experiment.conceptSummary, topic:experiment.topic, icon:'🧬', difficulty:experiment.difficulty, gameType:'verbatimBio3d', verbatimBioExperiment:experiment, readyMade:true }
+                  : { title: item.title || experiment.experimentTitle, description: result.summary || experiment.conceptSummary, topic: item.subtitle || 'Chemistry Lab', icon: electro ? '🔋' : '⚗️', difficulty: experiment.difficulty || 'Interactive 3D Lab', gameType: 'verbatim3d', verbatimResult: result, readyMade: true });
                 navigate('/game-intro');
               }} style={{ padding:20, textAlign:'left', cursor:'pointer', border:`2px solid ${item.accentColor || '#8B5CF6'}33`, borderTop:`5px solid ${item.accentColor || '#8B5CF6'}` }}>
                 <span className="chip" style={{ background:'#EDE9FE', color:'#6D28D9', marginBottom:10 }}>{item.classBadge || `Class ${item.minClass}–${item.maxClass}`}</span>
                 <h3 style={{ fontFamily:'var(--font-heading)', marginBottom:6 }}>{item.title || experiment?.experimentTitle}</h3>
                 <p style={{ color:'var(--text-secondary)', fontSize:'.84rem', lineHeight:1.5, marginBottom:14 }}>{item.subtitle || result.summary}</p>
-                <span style={{ fontSize:'.82rem', fontWeight:800, color:'#6D28D9' }}>{electro ? 'Launch Electro3D →' : 'Launch Lab3D →'}</span>
+                <span style={{ fontSize:'.82rem', fontWeight:800, color:isBio?'#16A34A':'#6D28D9' }}>{isBio ? `Launch ${experiment.sceneKind} lab →` : electro ? 'Launch Electro3D →' : 'Launch Lab3D →'}</span>
               </button>;
             })}
           </div> : <p style={{ color:'var(--text-secondary)' }}>Loading experiments…</p>}
-        </section>}
+        </section>
 
         {/* Topics Grid */}
         <h2 style={{ fontFamily:'var(--font-heading)', fontSize:'1.3rem', marginBottom:18, color:'var(--text-primary)' }}>
