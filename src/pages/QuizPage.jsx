@@ -78,7 +78,7 @@ function FlashCard({ item, onAnswer }) {
 export default function QuizPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentSubject, addQuizXP, addHistory } = useApp();
+  const { currentSubject, addQuizXP, addHistory, user } = useApp();
   const [idx, setIdx] = useState(0);
   const [input, setInput] = useState('');
   const [selected, setSelected] = useState(null);
