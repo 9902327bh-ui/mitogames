@@ -200,42 +200,48 @@ export default function QuizPage() {
       <div style={{ minHeight:'100vh', background: isBio?'linear-gradient(160deg,#F0FFF4,#F8F7FF)':'linear-gradient(160deg,#F5F3FF,#F0F9FF)' }}>
         {showConfetti && <Confetti count={30}/>}
         <Navbar/>
-        <div style={{ maxWidth:640, margin:'0 auto', padding:'40px 24px', textAlign:'center' }}>
-          <div className="card a-scale-in" style={{ padding:'40px', marginBottom:20 }}>
-            <div style={{ fontSize:'4rem', marginBottom:12 }}>{acc>=80?'🏆':acc>=60?'🌟':'💪'}</div>
-            <h1 style={{ fontFamily:'var(--font-display)', fontSize:'2rem', marginBottom:8 }}>Quiz Complete!</h1>
-            <p style={{ color:'var(--text-secondary)', marginBottom:28 }}>
-              You scored <strong>{correct}/{results.length}</strong> ({acc}% accuracy)
+        <div style={{ maxWidth:680, margin:'0 auto', padding:'48px 24px', textAlign:'center' }}>
+          <div className="card a-scale-in" style={{ padding:'44px 36px', marginBottom:20, border: isBio ? '2px solid rgba(34,197,94,.2)' : '2px solid rgba(139,92,246,.2)', borderRadius:28, boxShadow:'0 16px 40px rgba(0,0,0,.08)' }}>
+            <div style={{ fontSize:'4.2rem', marginBottom:14 }}>{acc>=80?'🏆':acc>=60?'🌟':'💪'}</div>
+            <span className="chip" style={{ background: isBio?'#DCFCE7':'#EDE9FE', color: isBio?'#16A34A':'#6D28D9', marginBottom:12 }}>
+              {isBio ? '🌱 Biology Quiz' : '⚗️ Chemistry Quiz'}
+            </span>
+            <h1 style={{ fontFamily:'var(--font-display)', fontSize:'2.2rem', marginBottom:8, color:'var(--text-primary)' }}>Quiz Complete!</h1>
+            <p style={{ color:'var(--text-secondary)', fontSize:'1.05rem', marginBottom:30 }}>
+              You scored <strong style={{ color:'var(--text-primary)' }}>{correct} / {results.length}</strong> ({acc}% accuracy)
             </p>
-            <div style={{ display:'flex', justifyContent:'center', gap:20, flexWrap:'wrap', marginBottom:28 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(130px, 1fr))', gap:16, marginBottom:32 }}>
               {[
-                { icon:'✅', val:correct, lbl:'Correct' },
-                { icon:'❌', val:results.length-correct, lbl:'Incorrect' },
-                { icon:'⚡', val:`+${xp}`, lbl:'XP Earned' },
+                { icon:'✅', val:correct, lbl:'Correct', bg:'#F0FDF4', border:'#BBF7D0', col:'#16A34A' },
+                { icon:'❌', val:results.length-correct, lbl:'Incorrect', bg:'#FEF2F2', border:'#FECACA', col:'#DC2626' },
+                { icon:'⚡', val:`+${xp} XP`, lbl:'XP Earned', bg:'#FEFCE8', border:'#FEF08A', col:'#CA8A04' },
               ].map(s=>(
-                <div key={s.lbl} style={{ textAlign:'center', background:'#F9FAFB', borderRadius:12, padding:'14px 20px' }}>
-                  <div style={{ fontSize:'1.5rem', marginBottom:4 }}>{s.icon}</div>
-                  <div style={{ fontFamily:'var(--font-display)', fontSize:'1.4rem', color:'var(--primary)' }}>{s.val}</div>
-                  <div style={{ fontSize:'.75rem', color:'var(--text-secondary)', fontWeight:700 }}>{s.lbl}</div>
+                <div key={s.lbl} style={{ textAlign:'center', background:s.bg, border:`1.5px solid ${s.border}`, borderRadius:18, padding:'18px 16px', boxShadow:'0 2px 8px rgba(0,0,0,.03)' }}>
+                  <div style={{ fontSize:'1.7rem', marginBottom:4 }}>{s.icon}</div>
+                  <div style={{ fontFamily:'var(--font-display)', fontSize:'1.4rem', color:s.col, fontWeight:800 }}>{s.val}</div>
+                  <div style={{ fontSize:'.78rem', color:'var(--text-secondary)', fontWeight:700, textTransform:'uppercase', letterSpacing:.5, marginTop:2 }}>{s.lbl}</div>
                 </div>
               ))}
             </div>
             {correct < results.length && (
-              <div style={{ background:'#FFF9EB', borderRadius:14, padding:'16px 18px', marginBottom:24, textAlign:'left' }}>
-                <div style={{ fontWeight:800, marginBottom:8, color:'#92400E' }}>📚 Review these topics:</div>
+              <div style={{ background:'#FFFBEB', border:'1.5px solid #FDE68A', borderRadius:18, padding:'18px 20px', marginBottom:28, textAlign:'left' }}>
+                <div style={{ fontWeight:800, marginBottom:10, color:'#92400E', display:'flex', alignItems:'center', gap:6, fontSize:'.95rem' }}>
+                  <span>📚</span> Review these topics:
+                </div>
                 {results.filter(r=>!r.correct).map((r,i)=>(
-                  <div key={i} style={{ fontSize:'.85rem', color:'var(--text-secondary)', marginBottom:4 }}>
-                    • {r.q?.question||r.q?.statement||`Question ${i+1}`}
+                  <div key={i} style={{ fontSize:'.88rem', color:'#78350F', marginBottom:6, display:'flex', alignItems:'baseline', gap:8, lineHeight:1.5 }}>
+                    <span style={{ color:'#D97706', fontWeight:800 }}>•</span>
+                    <span>{r.q?.question||r.q?.statement||`Question ${i+1}`}</span>
                   </div>
                 ))}
               </div>
             )}
-            <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
+            <div style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap' }}>
               <button className="btn btn-secondary" onClick={() => { setDone(false); setIdx(0); setResults([]); setAnswered(false); setInput(''); setSelected(null); }}>
-                <RotateCcw size={15}/> Retry Quiz
+                <RotateCcw size={16}/> Retry Quiz
               </button>
               <button className={`btn ${isBio?'btn-bio':'btn-chem'}`} onClick={() => navigate(isBio?'/biology':'/chemistry')}>
-                <Home size={15}/> Back to {isBio?'Biology':'Chemistry'}
+                <Home size={16}/> Back to {isBio?'Biology':'Chemistry'}
               </button>
             </div>
           </div>
@@ -252,23 +258,24 @@ export default function QuizPage() {
     if (q.type === 'truefalse') {
       return (
         <div>
-          <div style={{ background:'#F9FAFB', borderRadius:16, padding:'24px', marginBottom:24, textAlign:'center', fontFamily:'var(--font-heading)', fontSize:'1.2rem', lineHeight:1.5 }}>
+          <div style={{ background:'#F8FAFC', borderRadius:20, padding:'28px 24px', marginBottom:24, textAlign:'center', fontFamily:'var(--font-heading)', fontSize:'1.25rem', lineHeight:1.6, border:'1.5px solid #E2E8F0', color:'var(--text-primary)' }}>
             "{q.statement}"
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
             {[true,false].map(val => {
-              let bg='white', border='var(--border)';
+              let bg='white', border='#E2E8F0', textCol='var(--text-primary)';
               if (answered) {
-                if (val===q.answer) { bg='#F0FFF4'; border='#22C55E'; }
-                else if (val===selected) { bg='#FFF5F5'; border='#EF4444'; }
+                if (val===q.answer) { bg='#F0FDF4'; border='#22C55E'; textCol='#15803D'; }
+                else if (val===selected) { bg='#FEF2F2'; border='#EF4444'; textCol='#B91C1C'; }
               }
               return (
                 <button key={String(val)} onClick={()=>{if(!answered){setSelected(val);recordAnswer(val===q.answer);}}} style={{
-                  padding:'20px', borderRadius:14, border:`2.5px solid ${border}`, background:bg,
-                  cursor:answered?'default':'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:6, transition:'all .2s',
+                  padding:'22px 16px', borderRadius:18, border:`2.5px solid ${border}`, background:bg,
+                  cursor:answered?'default':'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:8, transition:'all .2s ease',
+                  boxShadow:'0 2px 10px rgba(0,0,0,.04)', color:textCol
                 }}>
-                  <span style={{fontSize:'2rem'}}>{val?'✅':'❌'}</span>
-                  <span style={{fontWeight:800,fontSize:'1rem'}}>{val?'TRUE':'FALSE'}</span>
+                  <span style={{fontSize:'2.2rem'}}>{val?'✅':'❌'}</span>
+                  <span style={{fontWeight:800,fontSize:'1.05rem',letterSpacing:.5}}>{val?'TRUE':'FALSE'}</span>
                 </button>
               );
             })}
@@ -280,18 +287,20 @@ export default function QuizPage() {
       const isCorrect = input.trim().toLowerCase() === (q.answer||'').toLowerCase();
       return (
         <div>
-          <p style={{ fontFamily:'var(--font-heading)', fontSize:'1.15rem', marginBottom:20, lineHeight:1.5 }}>{q.question}</p>
-          <input className="input-field" value={input} onChange={e=>!answered&&setInput(e.target.value)}
-            onKeyDown={e=>e.key==='Enter'&&!answered&&input.trim()&&recordAnswer(input.trim().toLowerCase()===(q.answer||'').toLowerCase())}
-            placeholder="Your answer..." disabled={answered} style={{marginBottom:14,fontSize:'1.1rem'}}/>
-          {!answered && (
-            <button className={`btn ${pal.btn}`} onClick={()=>recordAnswer(input.trim().toLowerCase()===(q.answer||'').toLowerCase())} disabled={!input.trim()}>
-              Submit
-            </button>
-          )}
+          <p style={{ fontFamily:'var(--font-heading)', fontSize:'1.25rem', marginBottom:22, lineHeight:1.55, color:'var(--text-primary)', fontWeight:700 }}>{q.question}</p>
+          <div style={{ display:'flex', gap:12, marginBottom:16, flexWrap:'wrap' }}>
+            <input className="input-field" value={input} onChange={e=>!answered&&setInput(e.target.value)}
+              onKeyDown={e=>e.key==='Enter'&&!answered&&input.trim()&&recordAnswer(input.trim().toLowerCase()===(q.answer||'').toLowerCase())}
+              placeholder="Type your answer..." disabled={answered} style={{flex:1, minWidth:220, fontSize:'1.05rem', padding:'14px 20px', borderRadius:16}}/>
+            {!answered && (
+              <button className={`btn ${pal.btn}`} onClick={()=>recordAnswer(input.trim().toLowerCase()===(q.answer||'').toLowerCase())} disabled={!input.trim()} style={{borderRadius:16, padding:'14px 28px'}}>
+                Submit
+              </button>
+            )}
+          </div>
           {answered && (
-            <div style={{ padding:'12px 16px', borderRadius:12, background:isCorrect?'#F0FFF4':'#FFF5F5', border:`1.5px solid ${isCorrect?'#22C55E':'#EF4444'}`, fontSize:'.9rem', fontWeight:700, color:isCorrect?'#16A34A':'#DC2626' }}>
-              {isCorrect?'✓ Correct!':'✗ Answer: '+q.answer}
+            <div style={{ padding:'16px 20px', borderRadius:16, background:isCorrect?'#F0FDF4':'#FEF2F2', border:`2px solid ${isCorrect?'#86EFAC':'#FECACA'}`, fontSize:'.95rem', fontWeight:700, color:isCorrect?'#166534':'#991B1B', display:'flex', alignItems:'center', gap:8 }}>
+              <span>{isCorrect?'✓ Correct! Great job!':'✗ Correct answer: ' + q.answer}</span>
             </div>
           )}
         </div>
@@ -303,25 +312,50 @@ export default function QuizPage() {
       : q.options || [];
     return (
       <div>
-        <p style={{ fontFamily:'var(--font-heading)', fontSize:'1.15rem', marginBottom:20, lineHeight:1.5 }}>{q.question}</p>
-        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+        <p style={{ fontFamily:'var(--font-heading)', fontSize:'1.25rem', marginBottom:22, lineHeight:1.55, color:'var(--text-primary)', fontWeight:700 }}>{q.question}</p>
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
           {opts.map((opt,i) => {
             const isCorrect = opt === (q.correctText || opts[q.correct]);
-            let bg='white', border='var(--border)', col='var(--text-primary)';
+            let bg='white', border='#E2E8F0', col='var(--text-primary)', badgeBg='#F1F5F9', badgeCol='var(--text-secondary)';
             if (answered) {
-              if (isCorrect) { bg='#F0FFF4'; border='#22C55E'; col='#16A34A'; }
-              else if (opt===selected&&!isCorrect) { bg='#FFF5F5'; border='#EF4444'; col='#DC2626'; }
+              if (isCorrect) {
+                bg='#F0FDF4'; border='#22C55E'; col='#15803D';
+                badgeBg='#22C55E'; badgeCol='white';
+              } else if (opt===selected&&!isCorrect) {
+                bg='#FEF2F2'; border='#EF4444'; col='#B91C1C';
+                badgeBg='#EF4444'; badgeCol='white';
+              } else {
+                bg='#F8FAFC'; border='#E2E8F0'; col='#94A3B8';
+                badgeBg='#F1F5F9'; badgeCol='#94A3B8';
+              }
             }
             return (
               <button key={i} onClick={()=>{if(!answered){setSelected(opt);recordAnswer(opt===(q.correctText||opts[q.correct]));} }} style={{
-                background:bg, border:`2px solid ${border}`, borderRadius:12, padding:'13px 18px',
+                background:bg, border:`2px solid ${border}`, borderRadius:16, padding:'16px 20px',
                 textAlign:'left', cursor:answered?'default':'pointer', fontFamily:'var(--font-body)',
-                fontWeight:600, fontSize:'.92rem', color:col, transition:'all .2s', display:'flex', alignItems:'center', gap:10,
+                fontWeight:600, fontSize:'.96rem', color:col, transition:'all .2s ease', display:'flex', alignItems:'center', justifyContent:'space-between', gap:14,
+                boxShadow:'0 2px 8px rgba(0,0,0,.03)'
               }}>
-                <span style={{ width:28, height:28, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', fontSize:'.8rem', fontWeight:800, flexShrink:0, background: answered&&isCorrect?'#22C55E':answered&&opt===selected?'#EF4444':'#F3F4F6', color: answered&&(isCorrect||opt===selected)?'white':'var(--text-secondary)' }}>
-                  {answered&&isCorrect?'✓':answered&&opt===selected?'✗':String.fromCharCode(65+i)}
-                </span>
-                {opt}
+                <div style={{ display:'flex', alignItems:'center', gap:12, minWidth:0 }}>
+                  <span style={{
+                    width:32, height:32, borderRadius:10, display:'inline-flex', alignItems:'center', justifyContent:'center',
+                    fontSize:'.85rem', fontWeight:800, flexShrink:0, background: badgeBg, color: badgeCol,
+                    transition:'all .2s ease'
+                  }}>
+                    {answered&&isCorrect?'✓':answered&&opt===selected?'✗':String.fromCharCode(65+i)}
+                  </span>
+                  <span style={{ lineHeight:1.4 }}>{opt}</span>
+                </div>
+                {answered && isCorrect && (
+                  <span style={{ fontSize:'.8rem', fontWeight:800, color:'#15803D', background:'#DCFCE7', padding:'4px 10px', borderRadius:999, flexShrink:0 }}>
+                    Correct
+                  </span>
+                )}
+                {answered && opt===selected && !isCorrect && (
+                  <span style={{ fontSize:'.8rem', fontWeight:800, color:'#B91C1C', background:'#FEE2E2', padding:'4px 10px', borderRadius:999, flexShrink:0 }}>
+                    Incorrect
+                  </span>
+                )}
               </button>
             );
           })}
@@ -333,47 +367,72 @@ export default function QuizPage() {
   return (
     <div style={{ minHeight:'100vh', background: isBio?'linear-gradient(160deg,#F0FFF4,#F8F7FF)':'linear-gradient(160deg,#F5F3FF,#F0F9FF)' }}>
       <Navbar/>
-      <div style={{ maxWidth:700, margin:'0 auto', padding:'28px 24px' }}>
+      <div style={{ maxWidth:740, margin:'0 auto', padding:'36px 24px' }}>
 
-        {/* Header */}
-        <div style={{ background:`linear-gradient(${pal.grad})`, borderRadius:20, padding:'18px 24px', marginBottom:24, color:'white', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        {/* Header banner */}
+        <div style={{
+          background:`linear-gradient(${pal.grad})`, borderRadius:24, padding:'22px 28px', marginBottom:20, color:'white',
+          display:'flex', alignItems:'center', justifyContent:'space-between', boxShadow:'0 10px 25px rgba(0,0,0,.1)'
+        }}>
           <div>
-            <div style={{ fontFamily:'var(--font-display)', fontSize:'1.2rem' }}>📝 Quiz Time!</div>
-            <div style={{ opacity:.85, fontSize:'.83rem' }}>{game.title}</div>
+            <span style={{ textTransform:'uppercase', fontSize:'.72rem', letterSpacing:1.5, opacity:.9, fontWeight:800 }}>
+              {isBio ? '🌱 Biology Lab Quiz' : '⚗️ Chemistry Lab Quiz'}
+            </span>
+            <div style={{ fontFamily:'var(--font-display)', fontSize:'1.45rem', marginTop:2 }}>{game.title}</div>
           </div>
-          <div style={{ textAlign:'right' }}>
-            <div style={{ fontFamily:'var(--font-display)', fontSize:'1.4rem' }}>{idx+1}/{total}</div>
-            <div style={{ opacity:.8, fontSize:'.75rem' }}>Question</div>
+          <div style={{ textAlign:'right', background:'rgba(255,255,255,.2)', padding:'8px 16px', borderRadius:16, backdropFilter:'blur(4px)' }}>
+            <div style={{ fontFamily:'var(--font-display)', fontSize:'1.4rem', lineHeight:1 }}>{idx+1} <span style={{ fontSize:'1rem', opacity:.8 }}>/ {total}</span></div>
+            <div style={{ opacity:.85, fontSize:'.72rem', fontWeight:700, textTransform:'uppercase', marginTop:2 }}>Question</div>
           </div>
         </div>
 
-        {/* Progress */}
-        <div className="progress-bar" style={{ marginBottom:24 }}>
-          <div className={`progress-fill ${isBio?'progress-fill-bio':'progress-fill-chem'}`} style={{ width:`${((idx)/total)*100}%` }}/>
+        {/* Progress bar */}
+        <div style={{ background:'white', borderRadius:16, padding:'14px 20px', marginBottom:20, border:'1.5px solid rgba(0,0,0,.05)', boxShadow:'0 2px 10px rgba(0,0,0,.03)' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', fontSize:'.82rem', fontWeight:700, color:'var(--text-secondary)', marginBottom:8 }}>
+            <span>Progress: {Math.round(((idx)/total)*100)}%</span>
+            <span>🎯 {results.filter(r=>r.correct).length} of {idx} correct</span>
+          </div>
+          <div className="progress-bar" style={{ height:10, borderRadius:999, background:'#F1F5F9' }}>
+            <div className={`progress-fill ${isBio?'progress-fill-bio':'progress-fill-chem'}`} style={{ width:`${((idx)/total)*100}%` }}/>
+          </div>
         </div>
 
         {/* Question Card */}
-        <div className="card" style={{ padding:'32px', marginBottom:20, border:`2px solid ${isBio?'rgba(34,197,94,.15)':'rgba(139,92,246,.15)'}` }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18 }}>
-            <span className="chip" style={{ background: isBio?'#DCFCE7':'#EDE9FE', color: isBio?'#16A34A':'#6D28D9' }}>
-              {q.type==='fill'?'Fill in the Blank':q.type==='truefalse'?'True or False':'Multiple Choice'}
+        <div className="card" style={{
+          padding:'36px 32px', marginBottom:24, borderRadius:26,
+          border:`2px solid ${isBio?'rgba(34,197,94,.2)':'rgba(139,92,246,.2)'}`,
+          boxShadow:'0 12px 36px rgba(0,0,0,.06)'
+        }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:22 }}>
+            <span className="chip" style={{ background: isBio?'#DCFCE7':'#EDE9FE', color: isBio?'#16A34A':'#6D28D9', padding:'6px 14px', fontSize:'.82rem' }}>
+              {q.type==='fill'?'✍️ Fill in the Blank':q.type==='truefalse'?'⚖️ True or False':'🎯 Multiple Choice'}
             </span>
-            <span style={{ fontSize:'.8rem', color:'var(--text-secondary)', fontWeight:600 }}>
-              ✅ {results.filter(r=>r.correct).length} correct so far
+            <span style={{ fontSize:'.85rem', color:'var(--text-secondary)', fontWeight:700, background:'#F8FAFC', padding:'6px 12px', borderRadius:12 }}>
+              Question {idx+1} of {total}
             </span>
           </div>
+
           {renderQuestion()}
 
           {answered && (
-            <div style={{ marginTop:18 }}>
+            <div style={{ marginTop:24, paddingTop:20, borderTop:'1.5px dashed #E2E8F0' }}>
               {q.explanation && (
-                <div style={{ background:'#FFF9EB', border:'2px solid #FFD93D', borderRadius:12, padding:'12px 16px', marginBottom:14, fontSize:'.88rem', color:'#92400E', lineHeight:1.6 }}>
-                  💡 {q.explanation}
+                <div style={{
+                  background:'linear-gradient(135deg, #FFFBEB, #FEF3C7)', border:'1.5px solid #FCD34D',
+                  borderRadius:18, padding:'16px 20px', marginBottom:18, fontSize:'.92rem', color:'#78350F', lineHeight:1.6,
+                  boxShadow:'0 2px 8px rgba(251,191,36,.1)'
+                }}>
+                  <strong style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4, color:'#92400E' }}>
+                    <span>💡</span> Scientific Explanation:
+                  </strong>
+                  {q.explanation}
                 </div>
               )}
-              <button className={`btn ${pal.btn}`} onClick={next}>
-                {idx+1>=total ? 'See Quiz Results 🏆' : 'Next Question →'}
-              </button>
+              <div style={{ display:'flex', justifyContent:'flex-end' }}>
+                <button className={`btn ${pal.btn} btn-lg`} onClick={next} style={{ borderRadius:16 }}>
+                  {idx+1>=total ? 'See Quiz Results 🏆' : 'Next Question →'}
+                </button>
+              </div>
             </div>
           )}
         </div>

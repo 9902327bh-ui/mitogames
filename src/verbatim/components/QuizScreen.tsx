@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   Award,
@@ -127,25 +128,28 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({
   if (finished) {
     const bonusEarned = correctCount * 25;
     return (
-      <div className="max-w-xl mx-auto bg-white border-2 border-amber-400 rounded-3xl p-7 sm:p-9 shadow-lg text-center space-y-5">
-        <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-amber-600">
-          <Award className="w-9 h-9" />
+      <motion.div initial={{ opacity: 0, y: 18, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.4 }} className="max-w-2xl mx-auto bg-white/95 backdrop-blur-md border border-amber-200/80 rounded-3xl p-9 sm:p-12 shadow-xl shadow-amber-950/5 text-center space-y-7">
+        <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-amber-100 to-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shadow-inner">
+          <Award className="w-10 h-10" />
         </div>
-        <div>
-          <h2 className="font-display text-2xl font-bold text-slate-900">Quiz Complete!</h2>
-          <p className="mt-1 text-sm text-slate-600">{experiment.experimentTitle}</p>
+        <div className="space-y-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200">
+            🧪 Chemistry Lab Quiz Complete
+          </span>
+          <h2 className="font-display text-3xl font-extrabold text-slate-800">Quiz Complete!</h2>
+          <p className="text-sm font-medium text-slate-600">{experiment.experimentTitle}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
-            <div className="text-xs font-semibold uppercase text-emerald-700">Correct Answers</div>
-            <div className="mt-1 text-2xl font-bold font-mono text-emerald-900">
+          <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4">
+            <div className="text-xs font-bold uppercase tracking-wider text-emerald-800">Correct Answers</div>
+            <div className="mt-1.5 text-2xl font-bold font-mono text-emerald-900">
               {correctCount} / {questions.length}
             </div>
           </div>
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-            <div className="text-xs font-semibold uppercase text-amber-700">Quiz Bonus Points</div>
-            <div className="mt-1 text-2xl font-bold font-mono text-amber-900">+{bonusEarned}</div>
+          <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4">
+            <div className="text-xs font-bold uppercase tracking-wider text-amber-800">Quiz Bonus XP</div>
+            <div className="mt-1.5 text-2xl font-bold font-mono text-amber-900">+{bonusEarned} XP</div>
           </div>
         </div>
 
@@ -153,7 +157,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({
           <button
             type="button"
             onClick={onBackToLab}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all cursor-pointer shadow-sm"
           >
             <FlaskConical className="w-4 h-4" />
             <span>Back to 3D Lab</span>
@@ -166,7 +170,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({
             Pick Next Experiment
           </button>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -176,77 +180,85 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({
     ((qKind === 'mcq' || qKind === 'electron_flow') && selectedIdx !== null);
 
   return (
-    <div className="max-w-2xl mx-auto bg-white border-2 border-sky-200 rounded-3xl shadow-md overflow-hidden">
-      <div className="px-6 py-4 bg-sky-50 border-b border-sky-100 flex items-center justify-between gap-4">
+    <motion.div initial={{ opacity: 0, y: 18, scale: 0.985 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.38, ease: 'easeOut' }} className="max-w-4xl mx-auto bg-white/95 backdrop-blur-md border border-sky-100 rounded-3xl shadow-xl shadow-sky-950/5 overflow-hidden">
+      {/* Top Bar with Navigation & Tracker */}
+      <div className="px-6 py-5 sm:px-8 sm:py-6 bg-gradient-to-r from-sky-50 via-indigo-50/40 to-sky-50 border-b border-sky-100/80 flex items-center justify-between gap-4">
         <button
           type="button"
           onClick={onBackToLab}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 border border-slate-200 text-xs font-bold text-slate-700 hover:text-slate-900 hover:bg-white shadow-xs transition-all cursor-pointer"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Lab</span>
         </button>
-        <div className="flex items-center gap-2 text-xs font-mono font-bold text-sky-800">
-          <Sparkles className="w-4 h-4 text-amber-500" />
-          <span>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-100 text-sky-800 border border-sky-200">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             {qKind === 'flashcard'
               ? 'FLASHCARD'
               : qKind === 'fill_blank'
                 ? 'FILL IN THE BLANK'
                 : qKind === 'electron_flow'
                   ? 'ELECTRON FLOW'
-                  : 'MULTIPLE CHOICE'}{' '}
-            · {currentIdx + 1} / {questions.length}
+                  : 'MULTIPLE CHOICE'}
+          </span>
+          <span className="text-xs font-mono font-bold text-slate-600 bg-white/70 px-2.5 py-1 rounded-full border border-slate-200">
+            {currentIdx + 1} / {questions.length}
           </span>
         </div>
       </div>
 
-      <div className="p-6 sm:p-8 space-y-5">
-        <h3 className="font-display text-lg sm:text-xl font-bold text-slate-900 leading-snug">
-          {q.question}
-        </h3>
+      <div className="p-8 sm:p-12 space-y-8">
+        <div className="space-y-1">
+          <span className="text-xs font-bold uppercase tracking-wider text-sky-600">
+            {experiment.experimentTitle}
+          </span>
+          <h3 className="font-display text-2xl sm:text-3xl font-bold text-slate-800 leading-snug">
+            {q.question}
+          </h3>
+        </div>
 
         {qKind === 'flashcard' ? (
           <div className="space-y-4">
-            <button
+            <motion.button whileHover={{ y: -3, rotateY: 2 }} whileTap={{ scale: 0.985 }}
               type="button"
               onClick={() => setCardFlipped((f) => !f)}
-              className={`w-full min-h-[156px] p-6 rounded-2xl border-2 text-center transition-all flex flex-col items-center justify-center gap-3 cursor-pointer ${
+              className={`w-full min-h-[160px] p-7 rounded-2xl border-2 text-center transition-all flex flex-col items-center justify-center gap-3 cursor-pointer shadow-sm hover:shadow-md ${
                 cardFlipped
-                  ? 'bg-indigo-50 border-indigo-400 text-indigo-950'
-                  : 'bg-amber-50 border-amber-300 text-slate-900 hover:border-amber-400'
+                  ? 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-300 text-indigo-950'
+                  : 'bg-gradient-to-br from-amber-50/70 to-orange-50/40 border-amber-200 text-slate-900 hover:border-amber-300'
               }`}
             >
               <span className="text-[11px] font-mono uppercase tracking-wider font-bold text-slate-500">
                 {cardFlipped ? 'Back — Concept Answer' : 'Front — Tap to Flip'}
               </span>
-              <p className="text-base sm:text-lg font-bold">
+              <p className="text-lg font-bold leading-snug">
                 {cardFlipped
                   ? q.flashcardBack || q.explanation
                   : q.flashcardFront || q.question}
               </p>
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 bg-white/80 px-3 py-1 rounded-full border border-sky-200 shadow-2xs">
                 <RotateCw className="w-3.5 h-3.5" />
                 <span>{cardFlipped ? 'Flip back' : 'Reveal answer'}</span>
               </span>
-            </button>
+            </motion.button>
 
             {cardFlipped && flashAck === null && (
-              <div className="grid grid-cols-2 gap-3">
-                <button
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}
                   type="button"
                   onClick={() => handleFlashConfirm(true)}
-                  className="py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl cursor-pointer"
+                  className="py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition-all cursor-pointer"
                 >
-                  I knew it! (+25)
-                </button>
-                <button
+                  I knew it! (+25 XP)
+                </motion.button>
+                <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}
                   type="button"
                   onClick={() => handleFlashConfirm(false)}
-                  className="py-2.5 text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl cursor-pointer"
+                  className="py-3 text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all cursor-pointer"
                 >
                   Need more review
-                </button>
+                </motion.button>
               </div>
             )}
           </div>
@@ -258,99 +270,122 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({
               onChange={(e) => setBlankValue(e.target.value)}
               disabled={blankSubmitted !== null}
               placeholder="Type missing term (e.g. 2e⁻ or Cu²⁺)..."
-              className="w-full h-12 px-4 text-sm font-mono bg-slate-50 border-2 border-slate-200 rounded-2xl focus:outline-none focus:bg-white focus:border-sky-500"
+              className="w-full h-13 px-5 text-base font-mono bg-slate-50 border-2 border-slate-200 rounded-2xl focus:outline-none focus:bg-white focus:border-sky-500 transition-all"
             />
 
             {Array.isArray(q.blankChips) && q.blankChips.length > 0 && blankSubmitted === null && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2.5">
                 {q.blankChips.map((chip) => (
-                  <button
+                  <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}
                     key={chip}
                     type="button"
                     onClick={() => setBlankValue(chip)}
-                    className="px-3 py-1.5 text-xs font-mono font-bold bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100 rounded-lg cursor-pointer"
+                    className="px-4 py-2 text-xs font-mono font-bold bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100 rounded-xl transition-all cursor-pointer shadow-2xs"
                   >
                     {chip}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             )}
 
             {blankSubmitted === null && (
-              <button
+              <motion.button whileHover={{ y: -2, scale: 1.01 }} whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="px-5 py-2.5 text-sm font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-xl cursor-pointer"
+                className="px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 rounded-xl shadow-md transition-all cursor-pointer"
               >
                 Check Answer
-              </button>
+              </motion.button>
             )}
           </form>
         ) : (
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {q.options.map((opt, idx) => {
               const isSelected = selectedIdx === idx;
               const isCorrect = idx === q.correctIndex;
               const answered = selectedIdx !== null;
+              const letter = String.fromCharCode(65 + idx);
 
               let style =
-                'bg-slate-50 border-slate-200 hover:border-sky-400 hover:bg-sky-50/50 text-slate-800';
+                'bg-slate-50/70 border-slate-200 hover:border-sky-400 hover:bg-sky-50/50 text-slate-800 hover:shadow-xs';
+              let badgeStyle = 'bg-white text-slate-600 border border-slate-200';
+
               if (answered) {
                 if (isCorrect) {
-                  style = 'bg-emerald-50 border-emerald-500 text-emerald-950';
+                  style = 'bg-emerald-50/90 border-emerald-500 text-emerald-950 font-bold ring-2 ring-emerald-500/20';
+                  badgeStyle = 'bg-emerald-600 text-white border-emerald-600';
                 } else if (isSelected) {
-                  style = 'bg-red-50 border-red-400 text-red-950';
+                  style = 'bg-rose-50/90 border-rose-400 text-rose-950 ring-2 ring-rose-500/20';
+                  badgeStyle = 'bg-rose-500 text-white border-rose-500';
                 } else {
-                  style = 'bg-slate-50 border-slate-200 text-slate-400 opacity-75';
+                  style = 'bg-slate-50/40 border-slate-200 text-slate-400 opacity-60';
+                  badgeStyle = 'bg-slate-100 text-slate-400 border-slate-200';
                 }
               }
 
               return (
-                <button
+                <motion.button
                   key={`${q.id}-opt-${idx}`}
                   type="button"
                   disabled={answered}
                   onClick={() => handleSelectOption(idx)}
-                  className={`w-full text-left px-4 py-3.5 rounded-2xl border-2 font-medium text-sm transition-all flex items-center justify-between gap-3 cursor-pointer disabled:cursor-default ${style}`}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.055, duration: 0.25 }}
+                  whileHover={{ y: -2, scale: 1.008 }}
+                  whileTap={{ scale: 0.985 }}
+                  className={`w-full text-left px-6 py-5 rounded-2xl border-2 transition-all duration-200 flex items-center justify-between gap-4 cursor-pointer disabled:cursor-default ${style}`}
                 >
-                  <span>{opt}</span>
-                  {answered && isCorrect && (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                  )}
-                  {answered && isSelected && !isCorrect && (
-                    <XCircle className="w-5 h-5 text-red-500 shrink-0" />
-                  )}
-                </button>
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <span className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 transition-colors ${badgeStyle}`}>
+                      {letter}
+                    </span>
+                    <span className="text-base sm:text-lg leading-snug">{opt}</span>
+                  </div>
+
+                  <div className="shrink-0 flex items-center">
+                    {answered && isCorrect && (
+                      <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-100/90 px-2.5 py-1 rounded-full">
+                        <CheckCircle2 className="w-4 h-4" /> Correct
+                      </span>
+                    )}
+                    {answered && isSelected && !isCorrect && (
+                      <span className="flex items-center gap-1 text-xs font-bold text-rose-700 bg-rose-100/90 px-2.5 py-1 rounded-full">
+                        <XCircle className="w-4 h-4" /> Incorrect
+                      </span>
+                    )}
+                  </div>
+                </motion.button>
               );
             })}
           </div>
         )}
 
         {isQuestionDone && (
-          <div className="pt-2 space-y-4">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }} className="pt-2 space-y-4">
             <div
-              className={`p-4 rounded-2xl border text-sm ${
+              className={`p-5 rounded-2xl border-2 space-y-2 ${
                 selectedIdx === q.correctIndex || blankSubmitted === true || flashAck === true
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                  : 'bg-amber-50 border-amber-200 text-amber-950'
+                  ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-300 text-emerald-950'
+                  : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300 text-amber-950'
               }`}
             >
-              <p className="font-bold mb-0.5">
+              <p className="font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
                 {selectedIdx === q.correctIndex || blankSubmitted === true || flashAck === true
-                  ? 'Correct! (+25 Quiz Bonus)'
-                  : `Answer: ${q.blankAnswer || q.options[q.correctIndex] || 'See below'}`}
+                  ? '✨ Outstanding! (+25 Quiz Bonus)'
+                  : `💡 Correct Concept: ${q.blankAnswer || q.options[q.correctIndex] || 'See explanation'}`}
               </p>
-              <p>{q.explanation}</p>
+              <p className="text-sm leading-relaxed text-slate-700">{q.explanation}</p>
             </div>
-            <button
+            <motion.button whileHover={{ y: -2, scale: 1.01 }} whileTap={{ scale: 0.98 }}
               type="button"
               onClick={handleNext}
-              className="w-full py-3 text-sm font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-xl transition-colors cursor-pointer"
+              className="w-full py-3.5 text-sm font-bold text-white bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 rounded-xl shadow-md transition-all cursor-pointer"
             >
-              {currentIdx + 1 >= questions.length ? 'See Quiz Score' : 'Next Question'}
-            </button>
-          </div>
+              {currentIdx + 1 >= questions.length ? 'See Quiz Score 🏆' : 'Next Question →'}
+            </motion.button>
+          </motion.div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };

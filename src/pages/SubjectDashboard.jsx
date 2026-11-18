@@ -27,6 +27,68 @@ function readVideoCache(key = API_CACHE_KEY) {
 
 const DIFF_COLOR = { Easy:'#22C55E', Medium:'#FF9A3C', Hard:'#EF4444' };
 
+const TOPIC_SAMPLE_IDS = {
+  'biology:1':'bio-cell-1',
+  'biology:2':'bio-photosynthesis-1',
+  'chemistry:1':'chem-atoms-1',
+  'chemistry:3':'chem-valency-1',
+  'chemistry:4':'chem-acids-1',
+  'chemistry:5':'chem-balancer-1',
+};
+
+const TOPIC_QUIZZES = {
+  'biology:3': [
+    { question:'Where does most nutrient absorption happen?', options:['Stomach','Small intestine','Large intestine','Oesophagus'], correct:1, explanation:'Villi in the small intestine provide a large surface area for absorbing digested nutrients.' },
+    { question:'Which organ produces bile to help digest fats?', options:['Liver','Pancreas','Kidney','Lung'], correct:0, explanation:'The liver makes bile, which helps break large fat droplets into smaller ones.' },
+    { question:'What does the stomach use to begin protein digestion?', options:['Bile','Hydrochloric acid and enzymes','Saliva only','Oxygen'], correct:1, explanation:'Stomach acid and enzymes such as pepsin begin breaking proteins into smaller pieces.' },
+  ],
+  'biology:4': [
+    { question:'Which molecule carries inherited instructions in most living things?', options:['DNA','Starch','Water','Cellulose'], correct:0, explanation:'DNA stores genetic instructions that can be passed from parents to offspring.' },
+    { question:'What is a gene?', options:['A type of blood cell','A digestive enzyme','A section of DNA with instructions','A whole chromosome pair'], correct:2, explanation:'A gene is a section of DNA that contains instructions for a functional product or trait.' },
+    { question:'Where are chromosomes found in a human cell?', options:['Cell membrane','Nucleus','Ribosome','Vacuole'], correct:1, explanation:'Human chromosomes are packaged inside the cell nucleus.' },
+  ],
+  'biology:5': [
+    { question:'What is the original source of energy for most food chains?', options:['The Sun','The Moon','Soil','Wind'], correct:0, explanation:'Producers capture sunlight and store it as chemical energy, which passes through food chains.' },
+    { question:'What role do decomposers play in an ecosystem?', options:['Make sunlight','Recycle nutrients from dead matter','Stop energy transfer','Produce rocks'], correct:1, explanation:'Decomposers break down dead organisms and return nutrients to the environment.' },
+    { question:'If a predator population falls, what may happen to its prey population?', options:['It must disappear','It becomes a producer','It may increase','It stops reproducing'], correct:2, explanation:'With fewer predators, more prey may survive and reproduce.' },
+  ],
+  'biology:6': [
+    { question:'Which flower part produces pollen?', options:['Anther','Stigma','Sepal','Ovary'], correct:0, explanation:'The anther is part of the stamen and produces pollen grains.' },
+    { question:'What is pollination?', options:['Growth of a root','Transfer of pollen to a stigma','Release of a seedling','Absorption of water'], correct:1, explanation:'Pollination transfers pollen from an anther to a stigma.' },
+    { question:'Which structure develops into a seed after fertilisation?', options:['Petal','Anther','Sepal','Ovule'], correct:3, explanation:'After fertilisation, the ovule develops into a seed.' },
+  ],
+  'biology:7': [
+    { question:'What is the basic signalling cell of the nervous system?', options:['Red blood cell','Neuron','Platelet','Alveolus'], correct:1, explanation:'Neurons carry electrical and chemical signals through the nervous system.' },
+    { question:'Which part of the brain helps coordinate balance and movement?', options:['Stomach','Cerebellum','Spinal disc','Liver'], correct:1, explanation:'The cerebellum helps coordinate balance, posture, and voluntary movement.' },
+    { question:'What is a reflex action?', options:['A learned language skill','A type of digestion','A rapid, automatic response','A slow voluntary plan'], correct:2, explanation:'Reflexes are quick, automatic responses that can help protect the body.' },
+  ],
+  'biology:8': [
+    { question:'Which feature is commonly used to classify organisms?', options:['Shared characteristics','Their favourite food','Their age today','Their location only'], correct:0, explanation:'Scientists group organisms by shared features and evolutionary relationships.' },
+    { question:'Which group contains organisms without a nucleus?', options:['Animals','Bacteria','Plants','Fungi'], correct:1, explanation:'Bacteria are prokaryotes and do not have a membrane-bound nucleus.' },
+    { question:'Which kingdom includes mushrooms?', options:['Animalia','Fungi','Plantae','Archaea'], correct:1, explanation:'Mushrooms are fungi; they absorb nutrients and do not photosynthesise.' },
+  ],
+  'chemistry:2': [
+    { question:'What does the atomic number tell you?', options:['Number of protons','Number of shells','Total neutrons only','Atom size'], correct:0, explanation:'An element’s atomic number is the number of protons in its nucleus.' },
+    { question:'Elements in the same group usually have the same number of…', options:['Outer-shell electrons','Neutrons','Energy levels','Isotopes'], correct:0, explanation:'For main-group elements, members of a group share the same number of valence electrons.' },
+    { question:'What is a horizontal row in the periodic table called?', options:['Period','Group','Family tree','Block only'], correct:0, explanation:'The horizontal rows of the periodic table are called periods.' },
+  ],
+  'chemistry:6': [
+    { question:'What happens to particles when a solid melts?', options:['They gain energy and move past one another','They stop moving','They become atoms','They lose all attraction'], correct:0, explanation:'Heating gives particles energy so they can move past one another as a liquid.' },
+    { question:'Which state has a fixed volume but no fixed shape?', options:['Liquid','Solid','Gas','Plasma only'], correct:0, explanation:'A liquid keeps a fixed volume but takes the shape of its container.' },
+    { question:'What is condensation?', options:['Gas changing into liquid','Solid changing into gas','Liquid changing into solid','Liquid changing into gas'], correct:0, explanation:'Condensation occurs when gas particles lose energy and form a liquid.' },
+  ],
+  'chemistry:7': [
+    { question:'What usually happens when many metals react with oxygen?', options:['They form metal oxides','They form sugars','They disappear','They become noble gases'], correct:0, explanation:'A metal reacting with oxygen commonly forms a metal oxide.' },
+    { question:'Which property makes copper useful for electrical wires?', options:['It conducts electricity','It is brittle','It dissolves in water','It is a gas'], correct:0, explanation:'Copper is a good electrical conductor and can be drawn into wires.' },
+    { question:'What is an alloy?', options:['A mixture containing a metal','A pure non-metal gas','A type of acid','A single atom'], correct:0, explanation:'An alloy is a mixture containing a metal, often made to improve its properties.' },
+  ],
+  'chemistry:8': [
+    { question:'Which element forms the backbone of most organic compounds?', options:['Carbon','Neon','Sodium','Iron'], correct:0, explanation:'Carbon can form four covalent bonds, allowing it to build many complex molecules.' },
+    { question:'What type of bond joins carbon atoms in a hydrocarbon?', options:['Covalent bond','Ionic bond only','Metallic bond','Magnetic bond'], correct:0, explanation:'Carbon atoms share pairs of electrons to form covalent bonds.' },
+    { question:'Which elements are present in a hydrocarbon?', options:['Carbon and hydrogen','Carbon and oxygen only','Hydrogen and nitrogen','Sodium and chlorine'], correct:0, explanation:'Hydrocarbons contain only carbon and hydrogen atoms.' },
+  ],
+};
+
 function TopicCard({ topic, subject, onStart }) {
   const isBio = subject === 'biology';
   return (
@@ -164,8 +226,24 @@ export default function SubjectDashboard({ subject = 'biology' }) {
   };
 
   const handleTopicStart = (topic) => {
-    const match = sampleGames.find(g => g.topic === topic.title) || sampleGames[0];
-    setCurrentGame({ ...match, fromTopic: true });
+    const sampleId = TOPIC_SAMPLE_IDS[`${subject}:${topic.id}`];
+    const sample = sampleGames.find(game => game.id === sampleId);
+    const topicQuestions = TOPIC_QUIZZES[`${subject}:${topic.id}`];
+    const selectedGame = sample || {
+      id:`${subject}-topic-${topic.id}`,
+      title:topic.title,
+      subject,
+      topic:topic.title,
+      grade:[Number.parseInt(topic.grade, 10) || 8, Number.parseInt(topic.grade.split('-')[1], 10) || 8],
+      board:['CBSE','ICSE','State Board'],
+      description:topic.desc,
+      estimatedTime:'5 mins',
+      difficulty:topic.difficulty,
+      icon:topic.icon,
+      gameType:'mcq',
+      questions:topicQuestions || [],
+    };
+    setCurrentGame({ ...selectedGame, title:topic.title, fromTopic:true });
     setCurrentSubject(subject);
     navigate('/game-intro');
   };
