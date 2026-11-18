@@ -1,5 +1,6 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import express from 'express';
+import fsSync from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -30,6 +31,17 @@ import { READY_MADE_EXPERIMENTS } from './readyMadeExperiments.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+if (!process.env.GEMINI_API_KEY?.trim()) {
+  const parentEnvPath = path.resolve(process.cwd(), '..', '.env');
+  if (fsSync.existsSync(parentEnvPath)) {
+    const parentEnv = dotenv.parse(fsSync.readFileSync(parentEnvPath));
+    if (parentEnv.GEMINI_API_KEY?.trim()) {
+      process.env.GEMINI_API_KEY = parentEnv.GEMINI_API_KEY.trim();
+    }
+  }
+}
 
 const PORT = Number(process.env.VERBATIM_API_PORT || 3001);
 const EXPERIMENTS_STORAGE_DIR = path.resolve(__dirname, '..', 'storage', 'experiments');
