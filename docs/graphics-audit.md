@@ -40,6 +40,8 @@ Phase 2 introduced `src/three/materials.ts` and wired a quality-aware, scene-sco
 
 Phase 3 now marks the active source/target with a gold emissive ring/arrow and a readable world-space label, gives the hovered model a temporary material lift, adds a brief red light flash to the existing wrong-click shake, and adds an overshoot pop/sparkle burst to accepted clicks. It reuses the existing custom glove cursor and leaves raycast IDs and accepted-click conditions unchanged.
 
+Phase 4 adds quintic/elastic/spring easings and a chained-tween helper, uses a staged anticipation/spring/settle cue for each step, lengthens camera dolly focus to 1.35 seconds, and adds restrained camera and meniscus idle motion (disabled for reduced-motion users and while the player is orbiting). Existing per-action completion delays and result mutations remain in `Bio3D.tsx`; this phase only changes their visual timing/easing.
+
 ## Behavior boundary
 
 The visual work must preserve the safety-gear first step, guided source/target click steps, science note after every step, completion modal, and quiz entry only after lab completion. No server, quiz, experiment schema, score, accuracy, or mission-flow changes are in scope. Missing assets and reduced-quality rendering must retain the current working model/renderer fallback.

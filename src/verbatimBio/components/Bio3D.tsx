@@ -33,7 +33,7 @@ import {
   drawRateGraphCanvas,
 } from '../three/models/controlPanelModels.ts';
 import { LabParticleSystem } from '../three/particles.ts';
-import { CameraDollyController, Easings, TweenManager } from '../three/tween.ts';
+import { CameraDollyController, Easings, prefersReducedMotion, TweenManager } from '../three/tween.ts';
 import type {
   BioExperiment,
   KeyTerm,
@@ -555,7 +555,26 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       // Dolly camera smoothly toward target area
       const focusTarget = targetBase.clone().add(new THREE.Vector3(0, 0.3, 0));
       const focusCamPos = focusTarget.clone().add(new THREE.Vector3(0.32, 1.25, 2.35));
-      refs.dolly.dollyTo(focusCamPos, focusTarget, 0.9);
+      refs.dolly.dollyTo(focusCamPos, focusTarget, 1.35);
+
+      // The gold guide performs a small wind-up, spring forward, and settle before the action beat.
+      refs.tweens.sequence([
+        {
+          duration: 0.16,
+          ease: Easings.easeInOutQuint,
+          onUpdate: (p) => refs.arrowIndicator.scale.set(1 - 0.14 * p, 1 - 0.1 * p, 1),
+        },
+        {
+          duration: 0.25,
+          ease: Easings.spring(9, 6),
+          onUpdate: (p) => refs.arrowIndicator.scale.set(0.86 + 0.28 * p, 0.9 + 0.22 * p, 1),
+        },
+        {
+          duration: 0.24,
+          ease: Easings.easeOutElastic,
+          onUpdate: (p) => refs.arrowIndicator.scale.set(1.14 - 0.14 * p, 1.12 - 0.12 * p, 1),
+        },
+      ]);
 
       const action = step.action;
       const effect = step.effect;
@@ -1470,6 +1489,11 @@ export const Bio3D: React.FC<Bio3DProps> = ({
     controls.minDistance = 1.6;
     controls.maxDistance = 6.5;
     controls.maxPolarAngle = Math.PI * 0.47;
+    let userOrbiting = false;
+    const onOrbitStart = () => { userOrbiting = true; };
+    const onOrbitEnd = () => { userOrbiting = false; };
+    controls.addEventListener('start', onOrbitStart);
+    controls.addEventListener('end', onOrbitEnd);
 
     const room = createLabRoom(scene, renderer, isSoftwareGl, experiment.sceneKind);
     const tweens = new TweenManager();
@@ -1499,6 +1523,7 @@ export const Bio3D: React.FC<Bio3DProps> = ({
     const renderableItems = allItemsWithSafety.filter((i) => !isSubTargetKind(i.kind));
     const itemGroups = new Map<string, THREE.Group>();
     const subTargetObjects = new Map<string, THREE.Object3D>();
+    const fluidSurfaces: Array<{ mesh: THREE.Mesh; baseY: number; phase: number }> = [];
     const basePositions = computeBenchLayout(renderableItems, experiment.sceneKind);
 
     renderableItems.forEach((item) => {
@@ -1515,6 +1540,10 @@ export const Bio3D: React.FC<Bio3DProps> = ({
 
       // Register embedded interactive sub-targets (chloroplast_panels, sugar_maker, dial notches, optimum_btn)
       grp.traverse((child) => {
+        if (child.userData.meniscusMesh instanceof THREE.Mesh) {
+          const meniscus = child.userData.meniscusMesh as THREE.Mesh;
+          fluidSurfaces.push({ mesh: meniscus, baseY: meniscus.position.y, phase: fluidSurfaces.length * 0.83 });
+        }
         if (typeof child.userData.subTargetId === 'string') {
           child.userData.itemId = child.userData.subTargetId;
           subTargetObjects.set(child.userData.subTargetId, child);
@@ -1785,16 +1814,12 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       const worldPosition = new THREE.Vector3();
       (subTargetObjects.get(itemId) ?? target).getWorldPosition(worldPosition);
       particles.emit('sparkle', worldPosition, 14, 0.24, 0xfacc15);
-      tweens.add({
-        duration: 0.2,
-        ease: Easings.easeOutBack,
-        onUpdate: (p) => { target.scale.copy(baseScale).lerp(pulseScale, p); },
-        onComplete: () => tweens.add({
-          duration: 0.24,
-          ease: Easings.easeOutCubic,
-          onUpdate: (p) => { target.scale.copy(pulseScale).lerp(baseScale, p); },
-        }),
-      });
+      const windupScale = baseScale.clone().multiplyScalar(0.96);
+      tweens.sequence([
+        { duration: 0.11, ease: Easings.easeInOutQuint, onUpdate: (p) => { target.scale.copy(baseScale).lerp(windupScale, p); } },
+        { duration: 0.22, ease: Easings.easeOutBack, onUpdate: (p) => { target.scale.copy(windupScale).lerp(pulseScale, p); } },
+        { duration: 0.26, ease: Easings.spring(9, 6), onUpdate: (p) => { target.scale.copy(pulseScale).lerp(baseScale, p); } },
+      ]);
     };
 
     const onClick = (ev: MouseEvent) => {
@@ -1979,18 +2004,33 @@ export const Bio3D: React.FC<Bio3DProps> = ({
     let rafId = 0;
     let prevNow = performance.now();
     const startNow = prevNow;
+    let idleOffsetX = 0;
+    let idleOffsetY = 0;
+    const allowIdleMotion = !prefersReducedMotion();
 
     const tick = (now: number) => {
       const dt = Math.min(0.1, (now - prevNow) * 0.001);
       prevNow = now;
       const timeSec = (now - startNow) * 0.001;
 
+      camera.position.x -= idleOffsetX;
+      camera.position.y -= idleOffsetY;
       controls.update();
       dolly.update(dt);
+      idleOffsetX = allowIdleMotion && !userOrbiting ? Math.sin(timeSec * 0.34) * 0.014 : 0;
+      idleOffsetY = allowIdleMotion && !userOrbiting ? Math.sin(timeSec * 0.26) * 0.008 : 0;
+      camera.position.x += idleOffsetX;
+      camera.position.y += idleOffsetY;
+      camera.lookAt(controls.target);
+      if (allowIdleMotion && !userOrbiting) camera.rotateZ(Math.sin(timeSec * 0.2) * 0.0018);
       tweens.update(dt);
       room.update(timeSec);
       particles.update(dt, timeSec);
       renderPipeline.update(dt);
+      for (let i = 0; i < fluidSurfaces.length; i++) {
+        const surface = fluidSurfaces[i];
+        surface.mesh.position.y = surface.baseY + Math.sin(timeSec * 2.4 + surface.phase) * 0.0025;
+      }
 
       // Update floating target arrow + ground ring above ONLY the active interactive object
       const curPhase = phaseRef.current;
@@ -2001,6 +2041,9 @@ export const Bio3D: React.FC<Bio3DProps> = ({
         expectedId = experiment.steps[stepIndexRef.current]?.sourceId ?? null;
       } else if (curPhase === 'awaiting_target') {
         expectedId = experiment.steps[stepIndexRef.current]?.targetId ?? null;
+      } else if (curPhase === 'animating') {
+        const activeStep = experiment.steps[stepIndexRef.current];
+        expectedId = activeStep?.targetId ?? activeStep?.sourceId ?? null;
       }
 
       let expectedObj: THREE.Object3D | undefined = expectedId
@@ -2049,6 +2092,7 @@ export const Bio3D: React.FC<Bio3DProps> = ({
         highlightRing.scale.set(ringScale, ringScale, 1);
       } else {
         arrowIndicator.visible = false;
+        arrowIndicator.scale.set(1, 1, 1);
         highlightRing.visible = false;
         targetLabel.visible = false;
       }
@@ -2159,6 +2203,8 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       renderer.domElement.removeEventListener('click', onClick);
       restoreHoveredGroup(activeHoverId);
       dolly.dispose();
+      controls.removeEventListener('start', onOrbitStart);
+      controls.removeEventListener('end', onOrbitEnd);
       controls.dispose();
       particles.dispose();
       room.dispose();

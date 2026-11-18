@@ -9,6 +9,18 @@ export const Easings = {
     t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
   easeOutCubic: (t: number) => 1 - Math.pow(1 - t, 3),
   easeInOutSine: (t: number) => -(Math.cos(Math.PI * t) - 1) / 2,
+  easeInOutQuint: (t: number) =>
+    t < 0.5 ? 16 * t * t * t * t * t : 1 - Math.pow(-2 * t + 2, 5) / 2,
+  easeOutElastic: (t: number) => {
+    if (t === 0 || t === 1) return t;
+    return Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * ((2 * Math.PI) / 3)) + 1;
+  },
+  spring: (frequency = 8, damping = 7): EasingFn => (t: number) => {
+    if (t <= 0 || t >= 1) return t;
+    const raw = 1 - Math.exp(-damping * t) * Math.cos(frequency * t);
+    const end = 1 - Math.exp(-damping) * Math.cos(frequency);
+    return raw / end;
+  },
   easeOutBack: (t: number) => {
     const c1 = 1.70158;
     const c3 = c1 + 1;
@@ -47,6 +59,15 @@ interface ActiveTween {
   onComplete?: () => void;
 }
 
+export interface TweenSequenceStep {
+  duration: number;
+  delay?: number;
+  ease?: EasingFn;
+  onStart?: () => void;
+  onUpdate: (progress: number) => void;
+  onComplete?: () => void;
+}
+
 export class TweenManager {
   private tweens: ActiveTween[] = [];
   private timers: Array<{ remaining: number; fn: () => void }> = [];
@@ -73,6 +94,16 @@ export class TweenManager {
       onUpdate: opts.onUpdate,
       onComplete: opts.onComplete,
     });
+  }
+
+  sequence(steps: TweenSequenceStep[]): void {
+    let offset = 0;
+    const reduced = prefersReducedMotion();
+    for (const step of steps) {
+      const duration = reduced ? Math.min(0.15, step.duration) : Math.max(0.01, step.duration);
+      this.add({ ...step, delay: offset + Math.max(0, step.delay ?? 0) });
+      offset += duration + Math.max(0, step.delay ?? 0);
+    }
   }
 
   after(delaySeconds: number, fn: () => void): void {
@@ -127,7 +158,7 @@ export class TweenManager {
 export class CameraDollyController {
   private active = false;
   private elapsed = 0;
-  private duration = 0.95;
+  private duration = 1.35;
   private startPos = new THREE.Vector3();
   private endPos = new THREE.Vector3();
   private startTarget = new THREE.Vector3();
@@ -146,7 +177,7 @@ export class CameraDollyController {
     this.controls.addEventListener('start', this.onUserStart);
   }
 
-  dollyTo(position: THREE.Vector3, target: THREE.Vector3, duration = 0.95): void {
+  dollyTo(position: THREE.Vector3, target: THREE.Vector3, duration = 1.35): void {
     this.startPos.copy(this.camera.position);
     this.startTarget.copy(this.controls.target);
     this.endPos.copy(position);
@@ -160,7 +191,7 @@ export class CameraDollyController {
     if (!this.active) return;
     this.elapsed += dt;
     const t = Math.min(1, this.elapsed / this.duration);
-    const e = Easings.easeInOutCubic(t);
+    const e = Easings.easeInOutQuint(t);
     this.camera.position.lerpVectors(this.startPos, this.endPos, e);
     this.controls.target.lerpVectors(this.startTarget, this.endTarget, e);
     this.controls.update();
