@@ -31,7 +31,7 @@ import { READY_MADE_EXPERIMENTS } from './readyMadeExperiments.ts';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = Number(process.env.VERBATIM_API_PORT || 3000);
+const PORT = Number(process.env.VERBATIM_API_PORT || 3001);
 const EXPERIMENTS_STORAGE_DIR = path.resolve(__dirname, '..', 'storage', 'experiments');
 
 const VALID_VESSELS: VesselType[] = [

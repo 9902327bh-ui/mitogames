@@ -62,13 +62,14 @@ pytest
 
 ## React app and Chemistry video labs
 
-The MitoGames React 18/Vite app runs with the Verbatim lab API in development:
+From the `mitogamefinal` directory, start the MitoGames React 18/Vite app and Verbatim lab API with:
 
 ```bash
+cd mitogames
 npm install
 npm run dev
 ```
 
-Set `GEMINI_API_KEY` in `.env` to enable YouTube transcription/classification and generated labs. The API returns a clear configuration error when the key is missing. The Vite dev server proxies `/api/health`, `/api/experiments`, `/api/summarize`, and `/api/quiz` to the lab service on port 3000. The existing FastAPI routes remain under `/api/v1`.
+Set `GEMINI_API_KEY` in `mitogames/.env` to enable YouTube transcription/classification and generated labs. The API returns a clear configuration error when the key is missing. The Vite dev server proxies `/api/health`, `/api/experiments`, `/api/summarize`, and `/api/quiz` to the lab service on port 3001, leaving port 3000 available for the existing service. The existing FastAPI routes remain under `/api/v1`.
 
 The ready-made experiment list is served by `/api/experiments/ready-made?classLevel=8`; run the API alone with `npm run dev:api` if needed. In production, configure the web host or reverse proxy to route these four API paths to the Verbatim service.
