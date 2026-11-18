@@ -38,6 +38,8 @@ The model upgrade pass should inspect all model builders in `src/verbatimBio/thr
 
 Phase 2 introduced `src/three/materials.ts` and wired a quality-aware, scene-scoped material library into the Biology model builders. The implemented material upgrades cover reusable glass, independent animated liquids, veined leaf/waxy/organic materials, microscope metal, control-panel metal, onion bulb/peel geometry, and heart surface vessels/lung lobules. Model families not directly mentioned here retain their prior mesh construction and working fallbacks.
 
+Phase 3 now marks the active source/target with a gold emissive ring/arrow and a readable world-space label, gives the hovered model a temporary material lift, adds a brief red light flash to the existing wrong-click shake, and adds an overshoot pop/sparkle burst to accepted clicks. It reuses the existing custom glove cursor and leaves raycast IDs and accepted-click conditions unchanged.
+
 ## Behavior boundary
 
 The visual work must preserve the safety-gear first step, guided source/target click steps, science note after every step, completion modal, and quiz entry only after lab completion. No server, quiz, experiment schema, score, accuracy, or mission-flow changes are in scope. Missing assets and reduced-quality rendering must retain the current working model/renderer fallback.

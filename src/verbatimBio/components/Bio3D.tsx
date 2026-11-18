@@ -1543,28 +1543,74 @@ export const Bio3D: React.FC<Bio3DProps> = ({
     const arrowCone = new THREE.Mesh(
       new THREE.ConeGeometry(0.075, 0.16, 14),
       new THREE.MeshStandardMaterial({
-        color: 0x10b981,
-        emissive: 0x059669,
-        emissiveIntensity: 0.75,
-        roughness: 0.25,
+        color: 0xfacc15,
+        emissive: 0xf59e0b,
+        emissiveIntensity: 1.15,
+        roughness: 0.2,
+        metalness: 0.08,
       }),
     );
     arrowCone.rotation.x = Math.PI;
     arrowIndicator.add(arrowCone);
     scene.add(arrowIndicator);
 
+    const ringMaterial = new THREE.MeshStandardMaterial({
+      color: 0xfacc15,
+      emissive: 0xf59e0b,
+      emissiveIntensity: 1.0,
+      transparent: true,
+      opacity: 0.88,
+      roughness: 0.24,
+      side: THREE.DoubleSide,
+    });
     const highlightRing = new THREE.Mesh(
       new THREE.RingGeometry(0.2, 0.26, 28),
-      new THREE.MeshBasicMaterial({
-        color: 0x10b981,
-        transparent: true,
-        opacity: 0.78,
-        side: THREE.DoubleSide,
-      }),
+      ringMaterial,
     );
     highlightRing.rotation.x = -Math.PI / 2;
     highlightRing.position.y = 0.016;
     scene.add(highlightRing);
+
+    const targetLabelCanvas = document.createElement('canvas');
+    targetLabelCanvas.width = 512;
+    targetLabelCanvas.height = 128;
+    const targetLabelContext = targetLabelCanvas.getContext('2d');
+    const targetLabelTexture = new THREE.CanvasTexture(targetLabelCanvas);
+    targetLabelTexture.colorSpace = THREE.SRGBColorSpace;
+    const targetLabel = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: targetLabelTexture,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+      toneMapped: false,
+    }));
+    targetLabel.name = 'CurrentBiologyTargetLabel';
+    targetLabel.scale.set(0.86, 0.22, 1);
+    targetLabel.visible = false;
+    targetLabel.raycast = () => {};
+    scene.add(targetLabel);
+    let targetLabelText = '';
+    const drawTargetLabel = (label: string) => {
+      if (!targetLabelContext || label === targetLabelText) return;
+      targetLabelText = label;
+      targetLabelContext.clearRect(0, 0, 512, 128);
+      targetLabelContext.fillStyle = 'rgba(15,23,42,.94)';
+      targetLabelContext.beginPath();
+      targetLabelContext.roundRect(4, 8, 504, 112, 22);
+      targetLabelContext.fill();
+      targetLabelContext.strokeStyle = '#facc15';
+      targetLabelContext.lineWidth = 5;
+      targetLabelContext.stroke();
+      targetLabelContext.fillStyle = '#fef3c7';
+      targetLabelContext.font = '700 34px system-ui, sans-serif';
+      targetLabelContext.textAlign = 'center';
+      targetLabelContext.textBaseline = 'middle';
+      const maxWidth = 460;
+      let text = label;
+      while (text.length > 4 && targetLabelContext.measureText(text).width > maxWidth) text = `${text.slice(0, -2)}…`;
+      targetLabelContext.fillText(text, 256, 66);
+      targetLabelTexture.needsUpdate = true;
+    };
 
     const dropperStream = new THREE.Mesh(
       new THREE.CylinderGeometry(0.01, 0.01, 0.15, 8),
@@ -1647,6 +1693,45 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       return null;
     };
 
+    const hoverMaterialOriginals = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
+    let activeHoverId: string | null = null;
+    const restoreHoveredGroup = (id: string | null) => {
+      if (!id) return;
+      const group = itemGroups.get(id);
+      if (!group) return;
+      group.traverse((child) => {
+        if (!(child instanceof THREE.Mesh)) return;
+        const original = hoverMaterialOriginals.get(child);
+        if (!original) return;
+        const current = Array.isArray(child.material) ? child.material : [child.material];
+        child.material = original;
+        current.forEach((material) => material.dispose());
+        hoverMaterialOriginals.delete(child);
+      });
+    };
+    const setHoveredGroup = (id: string | null) => {
+      if (id === activeHoverId) return;
+      restoreHoveredGroup(activeHoverId);
+      activeHoverId = id;
+      const group = id ? itemGroups.get(id) : undefined;
+      if (!group) return;
+      group.traverse((child) => {
+        if (!(child instanceof THREE.Mesh) || hoverMaterialOriginals.has(child)) return;
+        const originals = Array.isArray(child.material) ? child.material : [child.material];
+        const lifted = originals.map((material) => {
+          const clone = material.clone() as THREE.Material & { color?: THREE.Color; emissive?: THREE.Color; emissiveIntensity?: number };
+          clone.color?.lerp(new THREE.Color(0x6ee7b7), 0.12);
+          if (clone.emissive) {
+            clone.emissive.lerp(new THREE.Color(0x34d399), 0.36);
+            clone.emissiveIntensity = Math.max(clone.emissiveIntensity ?? 0, 0.32);
+          }
+          return clone;
+        });
+        hoverMaterialOriginals.set(child, child.material);
+        child.material = Array.isArray(child.material) ? lifted : lifted[0];
+      });
+    };
+
     const getPointerCoords = (ev: MouseEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
       pointerNdc.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
@@ -1659,6 +1744,7 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       const targets = Array.from(itemGroups.values());
       const hits = raycaster.intersectObjects(targets, true);
       const hitId = hits.length > 0 ? findItemIdFromObject(hits[0].object) : null;
+      setHoveredGroup(hitId);
       setHoveredItemId(hitId);
     };
 
@@ -1670,6 +1756,15 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       const grp = itemGroups.get(itemId);
       const base = basePositions.get(itemId);
       if (!grp || !base) return;
+      const errorFlash = new THREE.PointLight(0xf43f5e, 1.8, 1.25, 2);
+      errorFlash.position.set(0, 0.42, 0);
+      grp.add(errorFlash);
+      tweens.add({
+        duration: 0.42,
+        ease: Easings.easeOutCubic,
+        onUpdate: (p) => { errorFlash.intensity = 1.8 * (1 - p); },
+        onComplete: () => { grp.remove(errorFlash); },
+      });
       tweens.add({
         duration: 0.36,
         ease: Easings.linear,
@@ -1679,6 +1774,26 @@ export const Bio3D: React.FC<Bio3DProps> = ({
         onComplete: () => {
           grp.position.x = base.x;
         },
+      });
+    };
+
+    const popObject = (itemId: string) => {
+      const target = itemGroups.get(itemId) ?? subTargetObjects.get(itemId)?.parent;
+      if (!target) return;
+      const baseScale = target.scale.clone();
+      const pulseScale = baseScale.clone().multiplyScalar(1.13);
+      const worldPosition = new THREE.Vector3();
+      (subTargetObjects.get(itemId) ?? target).getWorldPosition(worldPosition);
+      particles.emit('sparkle', worldPosition, 14, 0.24, 0xfacc15);
+      tweens.add({
+        duration: 0.2,
+        ease: Easings.easeOutBack,
+        onUpdate: (p) => { target.scale.copy(baseScale).lerp(pulseScale, p); },
+        onComplete: () => tweens.add({
+          duration: 0.24,
+          ease: Easings.easeOutCubic,
+          onUpdate: (p) => { target.scale.copy(pulseScale).lerp(baseScale, p); },
+        }),
       });
     };
 
@@ -1772,6 +1887,7 @@ export const Bio3D: React.FC<Bio3DProps> = ({
 
         if (clickedId === step.sourceId || clickedMicroForSubStep || clickedWaterSupplyAlias || clickedKindAlias) {
           setRightClicks((r) => r + 1);
+          popObject(clickedId);
           if (isSingleClickStep) {
             playStepAnimation(step);
           } else {
@@ -1828,6 +1944,7 @@ export const Bio3D: React.FC<Bio3DProps> = ({
 
         if (clickedId === step.targetId || stageAliasValid || targetKindAlias) {
           setRightClicks((r) => r + 1);
+          popObject(clickedId);
           playStepAnimation(step);
         } else {
           labAudio.playGentleError();
@@ -1856,6 +1973,9 @@ export const Bio3D: React.FC<Bio3DProps> = ({
 
     // Pre-allocated tick vectors (zero per-frame allocations)
     const tmpTargetPos = new THREE.Vector3();
+    const targetBounds = new THREE.Box3();
+    const targetBoundsSize = new THREE.Vector3();
+    const targetBoundsCenter = new THREE.Vector3();
     let rafId = 0;
     let prevNow = performance.now();
     const startNow = prevNow;
@@ -1893,6 +2013,7 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       }
       if (expectedObj && expectedObj.visible) {
         arrowIndicator.visible = true;
+        targetLabel.visible = true;
         expectedObj.getWorldPosition(tmpTargetPos);
         const isSub = expectedObj !== itemGroups.get(expectedId ?? '');
         const arrowHeightOffset =
@@ -1910,10 +2031,26 @@ export const Bio3D: React.FC<Bio3DProps> = ({
         highlightRing.visible = !isSub;
         highlightRing.position.set(tmpTargetPos.x, 0.016, tmpTargetPos.z);
         const pulse = 1 + Math.sin(timeSec * 4) * 0.14;
-        highlightRing.scale.set(pulse, pulse, 1);
+        ringMaterial.emissiveIntensity = 0.78 + Math.sin(timeSec * 4) * 0.28;
+        targetBounds.setFromObject(expectedObj);
+        if (!targetBounds.isEmpty()) {
+          targetBounds.getSize(targetBoundsSize);
+          targetBounds.getCenter(targetBoundsCenter);
+          targetLabel.position.set(targetBoundsCenter.x, targetBounds.max.y + 0.16, targetBoundsCenter.z);
+          const labelScale = THREE.MathUtils.clamp(0.72 + targetBoundsSize.x * 0.08, 0.72, 1.12);
+          targetLabel.scale.set(labelScale, labelScale * 0.26, 1);
+        } else {
+          targetLabel.position.set(tmpTargetPos.x, tmpTargetPos.y + arrowHeightOffset + 0.12, tmpTargetPos.z);
+        }
+        drawTargetLabel(expectedId === '__safety_gear__'
+          ? experiment.sceneKind === 'factory' ? 'Yellow hard hat' : 'Safety gloves and coat'
+          : experiment.items.find((item) => item.id === expectedId)?.label ?? 'Next item');
+        const ringScale = pulse * THREE.MathUtils.clamp(Math.max(targetBoundsSize.x, targetBoundsSize.z, 0.5) * 0.9, 0.9, 2.5);
+        highlightRing.scale.set(ringScale, ringScale, 1);
       } else {
         arrowIndicator.visible = false;
         highlightRing.visible = false;
+        targetLabel.visible = false;
       }
 
       // Ongoing biological idle / process particle streams (capped nicely)
@@ -2020,6 +2157,7 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       renderer.domElement.removeEventListener('mousemove', onPointerMove);
       renderer.domElement.removeEventListener('mousedown', onPointerDown);
       renderer.domElement.removeEventListener('click', onClick);
+      restoreHoveredGroup(activeHoverId);
       dolly.dispose();
       controls.dispose();
       particles.dispose();
