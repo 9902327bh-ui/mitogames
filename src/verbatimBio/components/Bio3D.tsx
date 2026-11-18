@@ -2257,33 +2257,38 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       {/* Centered "The science behind it" Modal (shown after EVERY completed step) */}
       {phase === 'science_note' && currentStep && (
         <div
-          className="fixed inset-0 z-40 bg-[#0B1D14]/45 flex items-center justify-center p-4"
+          className="fixed inset-0 z-40 bg-[#07140F]/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6"
           role="dialog"
           aria-modal="true"
+          aria-labelledby="biology-step-note-title"
         >
-          <div className="max-w-xl w-full bg-white border border-[#C6DBD0] rounded-2xl shadow-2xl overflow-hidden">
-            <div className="bg-[#EFF7F2] border-b border-[#D4E3DA] px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#0D7A5F]" />
-                <h3 className="font-display text-lg font-bold text-[#11241B]">
-                  The science behind it
-                </h3>
+          <div className="max-w-2xl w-full max-h-[90vh] bg-white border border-[#D8E6DE] rounded-3xl shadow-[0_28px_90px_rgba(0,0,0,.3)] overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-r from-[#0B5D49] to-[#128064] px-5 sm:px-7 py-5 text-white flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-11 h-11 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5 text-emerald-100" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-[.18em] font-bold text-emerald-100">Step insight</p>
+                  <h3 id="biology-step-note-title" className="font-display text-lg sm:text-xl font-bold truncate">
+                    The science behind it
+                  </h3>
+                </div>
               </div>
-              <span className="font-mono text-xs font-semibold text-[#0D7A5F]">
-                Step {currentStep.stepNumber} / {experiment.steps.length}
+              <span className="shrink-0 rounded-full bg-white/15 border border-white/20 px-3 py-1.5 font-mono text-xs font-bold text-white">
+                {currentStep.stepNumber} / {experiment.steps.length}
               </span>
             </div>
 
-            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-              <p className="text-sm text-[#11241B] leading-relaxed">
-                {currentStep.scienceNote}{' '}
-                <span className="font-semibold text-[#0D7A5F]">
-                  ({currentStep.keyTerm.term}: {currentStep.keyTerm.definition})
-                </span>
-              </p>
+            <div className="p-5 sm:p-7 space-y-5 overflow-y-auto bg-[#F8FBF9]">
+              <section className="rounded-2xl border border-[#DCEAE1] bg-white p-4 sm:p-5 shadow-sm">
+                <p className="text-[10px] uppercase tracking-[.16em] font-extrabold text-[#0D7A5F] mb-2">What happened</p>
+                <p className="text-sm sm:text-base text-[#24372E] leading-relaxed">{currentStep.scienceNote}</p>
+              </section>
 
-              {/* Three-Box Readout */}
-              <div className="grid grid-cols-3 gap-2.5">
+              <section className="rounded-2xl border border-[#DCEAE1] bg-white p-4 sm:p-5 shadow-sm">
+                <p className="text-[10px] uppercase tracking-[.16em] font-extrabold text-[#64786C] mb-3">Lab readout</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 {(currentStep.readouts && currentStep.readouts.length === 3
                   ? currentStep.readouts
                   : [
@@ -2300,26 +2305,38 @@ export const Bio3D: React.FC<Bio3DProps> = ({
                 ).map((box) => (
                   <div
                     key={box.label}
-                    className="rounded-xl bg-[#F6FAF7] border border-[#DCECE3] p-3 text-center"
+                    className="min-w-0 rounded-xl bg-[#F3F8F5] border border-[#E0EBE4] p-3 text-left"
                   >
-                    <p className="text-[10px] font-mono font-semibold text-[#4E6B5D] tracking-wide">
+                    <p className="text-[10px] uppercase font-mono font-bold text-[#607568] tracking-wide mb-1">
                       {box.label}
                     </p>
-                    <p className="font-mono text-sm font-bold text-[#11241B] mt-0.5 truncate">
+                    <p className="font-mono text-sm font-bold text-[#19372A] leading-snug break-words">
                       {box.value}
                     </p>
                   </div>
                 ))}
-              </div>
+                </div>
+              </section>
 
-              <MiniDiagram kind={currentStep.miniDiagram} />
+              <section className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3.5">
+                <p className="text-[10px] uppercase tracking-[.16em] font-extrabold text-[#0D7A5F] mb-1">Key term</p>
+                <p className="text-sm text-[#33483B] leading-relaxed">
+                  <span className="font-extrabold text-[#0B5D49]">{currentStep.keyTerm.term}</span>
+                  <span className="text-[#75877C]"> · </span>{currentStep.keyTerm.definition}
+                </p>
+              </section>
+
+              <div className="rounded-2xl border border-[#DCEAE1] bg-white p-3 sm:p-4 shadow-sm">
+                <MiniDiagram kind={currentStep.miniDiagram} />
+              </div>
             </div>
 
-            <div className="px-6 py-4 bg-[#FAFDFB] border-t border-[#E3EFE8] flex items-center justify-end">
+            <div className="px-5 sm:px-7 py-4 bg-white border-t border-[#E3EFE8] flex items-center justify-between gap-4">
+              <span className="hidden sm:block text-xs text-[#718278]">Take a moment to review this step.</span>
               <button
                 type="button"
                 onClick={handleContinueScienceNote}
-                className="px-6 py-2.5 rounded-lg bg-[#0D7A5F] hover:bg-[#0A634D] text-white text-sm font-semibold flex items-center gap-2 cursor-pointer"
+                className="ml-auto px-6 py-3 rounded-xl bg-[#0D7A5F] hover:bg-[#0A634D] active:scale-[.98] text-white text-sm font-bold flex items-center gap-2 shadow-md shadow-emerald-900/15 transition cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>
