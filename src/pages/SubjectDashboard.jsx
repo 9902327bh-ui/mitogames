@@ -118,7 +118,7 @@ export default function SubjectDashboard({ subject = 'biology' }) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || 'Could not process the YouTube video.');
       }
-      setLoadingMessage('Checking the video and transcribing its chemistry lesson…');
+      setLoadingMessage(`Checking the video and transcribing its ${isBio ? 'biology' : 'chemistry'} lesson…`);
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -218,7 +218,9 @@ export default function SubjectDashboard({ subject = 'biology' }) {
               </div>
             </div>
 
-            {!isBio && <div style={{ background:'#F5F3FF', border:'1px solid #DDD6FE', borderRadius:12, padding:'12px 14px', marginBottom:16, fontSize:'.8rem', color:'#5B21B6' }}>Paste a chemistry video. We’ll transcribe it, check its topic, and build a playable lab.</div>}
+            <div style={{ background:isBio?'#F0FFF4':'#F5F3FF', border:`1px solid ${isBio?'#BBF7D0':'#DDD6FE'}`, borderRadius:12, padding:'12px 14px', marginBottom:16, fontSize:'.8rem', color:isBio?'#166534':'#5B21B6' }}>
+              Paste a {isBio?'biology':'chemistry'} video. We’ll transcribe it, check its topic, and build a playable lab.
+            </div>
 
             <div style={{ position:'relative', marginBottom:12 }}>
               <input
@@ -295,8 +297,10 @@ export default function SubjectDashboard({ subject = 'biology' }) {
                   ? { title:experiment.experimentTitle, description:experiment.conceptSummary, topic:experiment.topic, icon:'🧬', difficulty:experiment.difficulty, gameType:'verbatimBio3d', verbatimBioExperiment:experiment, readyMade:true }
                   : { title: item.title || experiment.experimentTitle, description: result.summary || experiment.conceptSummary, topic: item.subtitle || 'Chemistry Lab', icon: electro ? '🔋' : '⚗️', difficulty: experiment.difficulty || 'Interactive 3D Lab', gameType: 'verbatim3d', verbatimResult: result, readyMade: true });
                 navigate('/game-intro');
-              }} style={{ padding:20, textAlign:'left', cursor:'pointer', border:`2px solid ${item.accentColor || '#8B5CF6'}33`, borderTop:`5px solid ${item.accentColor || '#8B5CF6'}` }}>
-                <span className="chip" style={{ background:'#EDE9FE', color:'#6D28D9', marginBottom:10 }}>{item.classBadge || `Class ${item.minClass}–${item.maxClass}`}</span>
+              }} style={{ padding:20, textAlign:'left', cursor:'pointer', border:`2px solid ${item.accentColor || palette.primary}33`, borderTop:`5px solid ${item.accentColor || palette.primary}`, transition:'transform .2s, box-shadow .2s' }}
+                onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.boxShadow='0 14px 30px rgba(15,23,42,.1)';}}
+                onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';}}>
+                <span className="chip" style={{ background:palette.light, color:palette.dark, marginBottom:10 }}>{item.classBadge || `Class ${item.minClass}–${item.maxClass}`}</span>
                 <h3 style={{ fontFamily:'var(--font-heading)', marginBottom:6 }}>{item.title || experiment?.experimentTitle}</h3>
                 <p style={{ color:'var(--text-secondary)', fontSize:'.84rem', lineHeight:1.5, marginBottom:14 }}>{item.subtitle || result.summary}</p>
                 <span style={{ fontSize:'.82rem', fontWeight:800, color:isBio?'#16A34A':'#6D28D9' }}>{isBio ? `Launch ${experiment.sceneKind} lab →` : electro ? 'Launch Electro3D →' : 'Launch Lab3D →'}</span>
