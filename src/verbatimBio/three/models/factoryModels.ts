@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import {
   createGlassMaterial,
+  createLeafMaterial,
+  createOrganicMaterial,
   enableModelShadows,
   makeCanvasLabelTexture,
   type ModelBuildOptions,
@@ -154,12 +156,7 @@ export function buildLeafFactory(opts: ModelBuildOptions = {}): THREE.Group {
   g.add(upperCuticle);
 
   // Palisade column cells lined cleanly along upper wall
-  const palisadeMat = new THREE.MeshStandardMaterial({
-    color: 0x22c55e,
-    roughness: 0.42,
-    emissive: 0x15803d,
-    emissiveIntensity: 0.1,
-  });
+  const palisadeMat = createLeafMaterial(opts, 0x22c55e);
   const palisadeCells: THREE.Mesh[] = [];
   for (let i = 0; i < 11; i++) {
     const cell = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.36, 0.12), palisadeMat);
@@ -170,7 +167,7 @@ export function buildLeafFactory(opts: ModelBuildOptions = {}): THREE.Group {
   g.userData.palisadeMat = palisadeMat;
 
   // Spongy mesophyll rounded cells along lower back wall
-  const spongyMat = new THREE.MeshStandardMaterial({ color: 0x4ade80, roughness: 0.55 });
+  const spongyMat = createOrganicMaterial(opts, 0x4ade80, 0.52);
   for (let i = 0; i < 8; i++) {
     const sc = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), spongyMat);
     sc.scale.set(1.2, 0.85, 0.7);
@@ -404,7 +401,7 @@ export function buildXylemPipe(opts: ModelBuildOptions = {}): THREE.Group {
 
   const glassPipe = new THREE.Mesh(
     new THREE.CylinderGeometry(0.072, 0.072, 0.64, 18, 1, true),
-    createGlassMaterial(opts.isSoftwareGl, 0xbae6fd, 0.45),
+    createGlassMaterial(opts, 0xbae6fd, 0.45),
   );
   glassPipe.position.y = 0.35;
   g.add(glassPipe);
@@ -521,7 +518,7 @@ export function buildChloroplastPlant(opts: ModelBuildOptions = {}): THREE.Group
   // Translucent top dome window showing stacked thylakoid solar panels
   const domeGlass = new THREE.Mesh(
     new THREE.BoxGeometry(0.54, 0.18, 0.32),
-    createGlassMaterial(opts.isSoftwareGl, 0xbbf7d0, 0.36),
+    createGlassMaterial(opts, 0xbbf7d0, 0.36),
   );
   domeGlass.position.set(-0.08, 0.48, 0);
   g.add(domeGlass);

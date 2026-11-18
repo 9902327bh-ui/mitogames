@@ -36,6 +36,8 @@ The old `_verify_ui.mjs` found in the Biology engine download is not part of thi
 
 The model upgrade pass should inspect all model builders in `src/verbatimBio/three/models/`: `safetyGear.ts`, `microscope.ts`, `glassware.ts`, `factoryModels.ts`, `anatomyModels.ts`, `specimens.ts`, `controlPanelModels.ts`, `bottlesAndTools.ts`, and `shared.ts`. The scene-specific models shown in the captures are onion specimen/microscope apparatus, the photosynthesis factory assembly, pondweed process equipment, and heart/lung circulation anatomy. Keep item IDs, benchmark positions, interaction pivots, and the experiment JSON schema stable.
 
+Phase 2 introduced `src/three/materials.ts` and wired a quality-aware, scene-scoped material library into the Biology model builders. The implemented material upgrades cover reusable glass, independent animated liquids, veined leaf/waxy/organic materials, microscope metal, control-panel metal, onion bulb/peel geometry, and heart surface vessels/lung lobules. Model families not directly mentioned here retain their prior mesh construction and working fallbacks.
+
 ## Behavior boundary
 
 The visual work must preserve the safety-gear first step, guided source/target click steps, science note after every step, completion modal, and quiz entry only after lab completion. No server, quiz, experiment schema, score, accuracy, or mission-flow changes are in scope. Missing assets and reduced-quality rendering must retain the current working model/renderer fallback.

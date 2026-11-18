@@ -1,11 +1,20 @@
 import * as THREE from 'three';
+import type { BiologyMaterialLibrary } from '../../../three/materials.ts';
 
 export interface ModelBuildOptions {
   isSoftwareGl?: boolean;
   specimenPreset?: string;
+  materials?: BiologyMaterialLibrary;
 }
 
-export function createGlassMaterial(isSoftwareGl = false, tintHex = 0xe0f2fe, opacity = 0.38): THREE.MeshPhysicalMaterial {
+export function createGlassMaterial(
+  options: boolean | ModelBuildOptions = false,
+  tintHex: THREE.ColorRepresentation = 0xe0f2fe,
+  opacity = 0.38,
+): THREE.MeshPhysicalMaterial {
+  const isSoftwareGl = typeof options === 'boolean' ? options : Boolean(options.isSoftwareGl);
+  const library = typeof options === 'boolean' ? undefined : options.materials;
+  if (library) return library.glass(tintHex, opacity, isSoftwareGl);
   return new THREE.MeshPhysicalMaterial({
     color: tintHex,
     roughness: 0.08,
@@ -20,6 +29,29 @@ export function createGlassMaterial(isSoftwareGl = false, tintHex = 0xe0f2fe, op
     side: THREE.DoubleSide,
     depthWrite: false,
   });
+}
+
+export function createLiquidMaterial(
+  options: ModelBuildOptions,
+  color: THREE.ColorRepresentation,
+  opacity = 0.64,
+): THREE.MeshPhysicalMaterial {
+  if (options.materials) return options.materials.liquid(color, opacity);
+  return new THREE.MeshPhysicalMaterial({ color, roughness: 0.12, transparent: true, opacity, clearcoat: 0.86, clearcoatRoughness: 0.08, side: THREE.DoubleSide, depthWrite: false });
+}
+
+export function createOrganicMaterial(
+  options: ModelBuildOptions,
+  color: THREE.ColorRepresentation,
+  roughness = 0.38,
+): THREE.MeshPhysicalMaterial {
+  if (options.materials) return options.materials.organic(color, roughness);
+  return new THREE.MeshPhysicalMaterial({ color, roughness, clearcoat: 0.58, clearcoatRoughness: 0.32, envMapIntensity: 0.72 });
+}
+
+export function createLeafMaterial(options: ModelBuildOptions, color: THREE.ColorRepresentation): THREE.MeshPhysicalMaterial {
+  if (options.materials) return options.materials.leaf(color);
+  return new THREE.MeshPhysicalMaterial({ color, roughness: 0.4, clearcoat: 0.48, side: THREE.DoubleSide });
 }
 
 export function makeCanvasLabelTexture(

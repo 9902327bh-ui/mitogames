@@ -16,21 +16,9 @@ export interface MicroscopeRefs {
 export function buildMicroscope(opts: ModelBuildOptions = {}): THREE.Group {
   const g = new THREE.Group();
 
-  const bodyMat = new THREE.MeshStandardMaterial({
-    color: 0xf8fafc,
-    roughness: 0.28,
-    metalness: 0.18,
-  });
-  const darkMetalMat = new THREE.MeshStandardMaterial({
-    color: 0x1e293b,
-    roughness: 0.35,
-    metalness: 0.55,
-  });
-  const chromeMat = new THREE.MeshStandardMaterial({
-    color: 0xe2e8f0,
-    roughness: 0.16,
-    metalness: 0.88,
-  });
+  const bodyMat = opts.materials?.plastic(0xf8fafc, 0.26) ?? new THREE.MeshPhysicalMaterial({ color: 0xf8fafc, roughness: 0.26, metalness: 0.12, clearcoat: 0.5 });
+  const darkMetalMat = opts.materials?.metal(0x1e293b, 0.52, 0.31) ?? new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.31, metalness: 0.52 });
+  const chromeMat = opts.materials?.metal(0xe2e8f0, 0.88, 0.14) ?? new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.14, metalness: 0.88 });
   const tealAccentMat = new THREE.MeshStandardMaterial({
     color: 0x0d7a5f,
     roughness: 0.32,
@@ -99,7 +87,7 @@ export function buildMicroscope(opts: ModelBuildOptions = {}): THREE.Group {
   // Condenser aperture disc
   const aperture = new THREE.Mesh(
     new THREE.CylinderGeometry(0.055, 0.055, 0.036, 18),
-    createGlassMaterial(opts.isSoftwareGl, 0xffffff, 0.28),
+    createGlassMaterial(opts, 0xffffff, 0.28),
   );
   aperture.position.set(0, 0, 0.04);
   stageGroup.add(aperture);
@@ -119,7 +107,7 @@ export function buildMicroscope(opts: ModelBuildOptions = {}): THREE.Group {
 
   const mountedSlide = new THREE.Mesh(
     new THREE.BoxGeometry(0.28, 0.01, 0.11),
-    createGlassMaterial(opts.isSoftwareGl, 0xe0f2fe, 0.5),
+    createGlassMaterial(opts, 0xe0f2fe, 0.5),
   );
   stageSlideGroup.add(mountedSlide);
 
@@ -150,7 +138,7 @@ export function buildMicroscope(opts: ModelBuildOptions = {}): THREE.Group {
 
   const stageCoverslip = new THREE.Mesh(
     new THREE.BoxGeometry(0.082, 0.004, 0.082),
-    createGlassMaterial(opts.isSoftwareGl, 0xf8fafc, 0.52),
+    createGlassMaterial(opts, 0xf8fafc, 0.52),
   );
   stageCoverslip.position.y = 0.014;
   stageCoverslip.visible = false;
@@ -202,7 +190,7 @@ export function buildMicroscope(opts: ModelBuildOptions = {}): THREE.Group {
 
   const ocularLens = new THREE.Mesh(
     new THREE.CylinderGeometry(0.038, 0.038, 0.015, 18),
-    createGlassMaterial(opts.isSoftwareGl, 0x38bdf8, 0.45),
+    createGlassMaterial(opts, 0x38bdf8, 0.45),
   );
   ocularLens.position.y = 0.36;
   drawTubeGroup.add(ocularLens);

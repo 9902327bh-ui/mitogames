@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {
   createGlassMaterial,
+  createLiquidMaterial,
   enableModelShadows,
   makeCanvasLabelTexture,
   makeGraduationsTexture,
@@ -9,7 +10,7 @@ import {
 
 export function buildGlassSlide(opts: ModelBuildOptions = {}, tintColor = '#7dd3fc'): THREE.Group {
   const g = new THREE.Group();
-  const glassMat = createGlassMaterial(opts.isSoftwareGl, new THREE.Color(tintColor).getHex(), 0.62);
+  const glassMat = createGlassMaterial(opts, new THREE.Color(tintColor).getHex(), 0.62);
 
   const slide = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.022, 0.18), glassMat);
   slide.position.y = 0.015;
@@ -68,7 +69,7 @@ export function buildCoverslip(opts: ModelBuildOptions = {}): THREE.Group {
 
   const glassSlip = new THREE.Mesh(
     new THREE.BoxGeometry(0.16, 0.01, 0.16),
-    createGlassMaterial(opts.isSoftwareGl, 0xbae6fd, 0.72),
+    createGlassMaterial(opts, 0xbae6fd, 0.72),
   );
   glassSlip.position.set(0, 0.038, 0);
   glassSlip.rotation.y = 0.14;
@@ -92,7 +93,7 @@ export function buildSlideTray(opts: ModelBuildOptions = {}): THREE.Group {
   for (let i = -1; i <= 1; i++) {
     const slotSlide = new THREE.Mesh(
       new THREE.BoxGeometry(0.14, 0.012, 0.26),
-      createGlassMaterial(opts.isSoftwareGl, 0xe0f2fe, 0.42),
+      createGlassMaterial(opts, 0xe0f2fe, 0.42),
     );
     slotSlide.position.set(i * 0.16, 0.04, 0);
     g.add(slotSlide);
@@ -104,7 +105,7 @@ export function buildSlideTray(opts: ModelBuildOptions = {}): THREE.Group {
 
 export function buildBeaker(opts: ModelBuildOptions = {}, liquidHex = '#bae6fd'): THREE.Group {
   const g = new THREE.Group();
-  const glassMat = createGlassMaterial(opts.isSoftwareGl, 0xe0f2fe, 0.34);
+  const glassMat = createGlassMaterial(opts, 0xe0f2fe, 0.34);
 
   const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.2, 0.46, 26, 1, true), glassMat);
   body.position.y = 0.23;
@@ -139,13 +140,7 @@ export function buildBeaker(opts: ModelBuildOptions = {}, liquidHex = '#bae6fd')
 
   // Inner animated liquid cylinder + meniscus ring
   const liqColor = new THREE.Color(liquidHex);
-  const liqMat = new THREE.MeshStandardMaterial({
-    color: liqColor,
-    transparent: true,
-    opacity: 0.58,
-    roughness: 0.12,
-    metalness: 0.05,
-  });
+  const liqMat = createLiquidMaterial(opts, liqColor, 0.58);
   const liquid = new THREE.Mesh(new THREE.CylinderGeometry(0.195, 0.186, 0.28, 22), liqMat);
   liquid.position.y = 0.15;
   g.add(liquid);
@@ -175,7 +170,7 @@ export function buildBeaker(opts: ModelBuildOptions = {}, liquidHex = '#bae6fd')
 
 export function buildTestTube(opts: ModelBuildOptions = {}, liquidHex = '#38bdf8'): THREE.Group {
   const g = new THREE.Group();
-  const glassMat = createGlassMaterial(opts.isSoftwareGl, 0xe0f2fe, 0.38);
+  const glassMat = createGlassMaterial(opts, 0xe0f2fe, 0.38);
 
   const stand = new THREE.Mesh(
     new THREE.CylinderGeometry(0.08, 0.095, 0.04, 16),
@@ -197,12 +192,7 @@ export function buildTestTube(opts: ModelBuildOptions = {}, liquidHex = '#38bdf8
   rim.position.y = 0.48;
   g.add(rim);
 
-  const liqMat = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(liquidHex),
-    transparent: true,
-    opacity: 0.72,
-    roughness: 0.15,
-  });
+  const liqMat = createLiquidMaterial(opts, new THREE.Color(liquidHex), 0.72);
   const liq = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.24, 16), liqMat);
   liq.position.y = 0.17;
   g.add(liq);
@@ -245,7 +235,7 @@ export function buildTestTubeRack(opts: ModelBuildOptions = {}): THREE.Group {
 
 export function buildConicalFlask(opts: ModelBuildOptions = {}, liquidHex = '#fde047'): THREE.Group {
   const g = new THREE.Group();
-  const glassMat = createGlassMaterial(opts.isSoftwareGl, 0xe0f2fe, 0.36);
+  const glassMat = createGlassMaterial(opts, 0xe0f2fe, 0.36);
 
   const body = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.22, 0.34, 24, 1, true), glassMat);
   body.position.y = 0.18;
@@ -259,12 +249,7 @@ export function buildConicalFlask(opts: ModelBuildOptions = {}, liquidHex = '#fd
   bottom.position.y = 0.008;
   g.add(bottom);
 
-  const liqMat = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(liquidHex),
-    transparent: true,
-    opacity: 0.7,
-    roughness: 0.15,
-  });
+  const liqMat = createLiquidMaterial(opts, new THREE.Color(liquidHex), 0.7);
   const liq = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.205, 0.18, 22), liqMat);
   liq.position.y = 0.1;
   g.add(liq);
@@ -278,7 +263,7 @@ export function buildConicalFlask(opts: ModelBuildOptions = {}, liquidHex = '#fd
 
 export function buildMeasuringCylinder(opts: ModelBuildOptions = {}, liquidHex = '#38bdf8'): THREE.Group {
   const g = new THREE.Group();
-  const glassMat = createGlassMaterial(opts.isSoftwareGl, 0xe0f2fe, 0.34);
+  const glassMat = createGlassMaterial(opts, 0xe0f2fe, 0.34);
 
   const hexBase = new THREE.Mesh(
     new THREE.CylinderGeometry(0.13, 0.14, 0.03, 6),
@@ -301,7 +286,7 @@ export function buildMeasuringCylinder(opts: ModelBuildOptions = {}, liquidHex =
 
   const liq = new THREE.Mesh(
     new THREE.CylinderGeometry(0.06, 0.06, 0.34, 16),
-    new THREE.MeshStandardMaterial({ color: new THREE.Color(liquidHex), transparent: true, opacity: 0.65 }),
+    createLiquidMaterial(opts, new THREE.Color(liquidHex), 0.65),
   );
   liq.position.y = 0.2;
   g.add(liq);
@@ -313,7 +298,7 @@ export function buildMeasuringCylinder(opts: ModelBuildOptions = {}, liquidHex =
 
 export function buildPetriDish(opts: ModelBuildOptions = {}): THREE.Group {
   const g = new THREE.Group();
-  const glassMat = createGlassMaterial(opts.isSoftwareGl, 0xe0f2fe, 0.44);
+  const glassMat = createGlassMaterial(opts, 0xe0f2fe, 0.44);
 
   const dish = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.055, 24), glassMat);
   dish.position.y = 0.028;
@@ -337,7 +322,7 @@ export function buildPetriDish(opts: ModelBuildOptions = {}): THREE.Group {
 
 export function buildWatchGlass(opts: ModelBuildOptions = {}): THREE.Group {
   const g = new THREE.Group();
-  const glassMat = createGlassMaterial(opts.isSoftwareGl, 0xe0f2fe, 0.5);
+  const glassMat = createGlassMaterial(opts, 0xe0f2fe, 0.5);
 
   const saucer = new THREE.Mesh(
     new THREE.SphereGeometry(0.22, 20, 12, 0, Math.PI * 2, Math.PI * 0.72, Math.PI * 0.28),
@@ -409,7 +394,7 @@ export function buildWaterBath(opts: ModelBuildOptions = {}): THREE.Group {
 
 export function buildFlaskBalloon(opts: ModelBuildOptions = {}, balloonHex = '#f97316'): THREE.Group {
   const g = new THREE.Group();
-  const glassMat = createGlassMaterial(opts.isSoftwareGl, 0xe0f2fe, 0.36);
+  const glassMat = createGlassMaterial(opts, 0xe0f2fe, 0.36);
 
   const body = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.23, 0.34, 24, 1, true), glassMat);
   body.position.y = 0.18;

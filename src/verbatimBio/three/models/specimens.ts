@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { enableModelShadows, makeCanvasLabelTexture, type ModelBuildOptions } from './shared.ts';
+import { createLeafMaterial, enableModelShadows, makeCanvasLabelTexture, type ModelBuildOptions } from './shared.ts';
 
 export function buildOnionBulb(opts: ModelBuildOptions = {}): THREE.Group {
   const g = new THREE.Group();
@@ -11,11 +11,20 @@ export function buildOnionBulb(opts: ModelBuildOptions = {}): THREE.Group {
   g.add(tray);
 
   // Layered papery purple-amber onion bulb half
-  const bulbMat = new THREE.MeshStandardMaterial({
-    color: 0xb45309,
-    roughness: 0.55,
-  });
-  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.145, 20, 16), bulbMat);
+  const bulbMat = opts.materials?.waxy(0xb45309, 0.42) ?? new THREE.MeshPhysicalMaterial({ color: 0xb45309, roughness: 0.42, clearcoat: 0.4 });
+  const bulb = new THREE.Mesh(
+    new THREE.LatheGeometry([
+      new THREE.Vector2(0, -0.13),
+      new THREE.Vector2(0.065, -0.125),
+      new THREE.Vector2(0.125, -0.085),
+      new THREE.Vector2(0.15, -0.025),
+      new THREE.Vector2(0.14, 0.055),
+      new THREE.Vector2(0.1, 0.105),
+      new THREE.Vector2(0.045, 0.137),
+      new THREE.Vector2(0, 0.145),
+    ], 32),
+    bulbMat,
+  );
   bulb.scale.set(1, 0.92, 0.85);
   bulb.position.set(-0.03, 0.13, 0);
   g.add(bulb);
@@ -25,8 +34,20 @@ export function buildOnionBulb(opts: ModelBuildOptions = {}): THREE.Group {
   g.add(tip);
 
   // Translucent peeled epidermis layer resting beside bulb
+  const peelShape = new THREE.Shape();
+  peelShape.moveTo(-0.07, 0);
+  peelShape.quadraticCurveTo(-0.04, 0.07, 0.015, 0.08);
+  peelShape.quadraticCurveTo(0.08, 0.045, 0.07, -0.01);
+  peelShape.quadraticCurveTo(0, -0.055, -0.07, 0);
+  const peelGeom = new THREE.ExtrudeGeometry(peelShape, {
+    depth: 0.005,
+    bevelEnabled: true,
+    bevelThickness: 0.004,
+    bevelSize: 0.004,
+    bevelSegments: 2,
+  });
   const peel = new THREE.Mesh(
-    new THREE.BoxGeometry(0.11, 0.008, 0.11),
+    peelGeom,
     new THREE.MeshStandardMaterial({
       color: 0xfef3c7,
       transparent: true,
@@ -60,12 +81,7 @@ export function buildLeafSample(opts: ModelBuildOptions = {}, colorHex = '#22c55
   });
   leafGeom.center();
 
-  const leafMat = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(colorHex),
-    roughness: 0.42,
-    metalness: 0.04,
-    side: THREE.DoubleSide,
-  });
+  const leafMat = createLeafMaterial(opts, new THREE.Color(colorHex));
   const blade = new THREE.Mesh(leafGeom, leafMat);
   blade.rotation.x = -Math.PI / 2 + 0.18;
   blade.position.y = 0.055;
@@ -78,6 +94,19 @@ export function buildLeafSample(opts: ModelBuildOptions = {}, colorHex = '#22c55
   midrib.position.set(0, 0.055, 0.04);
   g.add(midrib);
 
+  // Fine diagonal veins make the specimen read as a leaf at game-camera distance.
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < 4; i++) {
+      const y = 0.025 + i * 0.045;
+      const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0, 0.055, y),
+        new THREE.Vector3(side * 0.075, 0.057, y + 0.035),
+        new THREE.Vector3(side * (0.13 - i * 0.01), 0.055, y + 0.07),
+      ]);
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 8, 0.0022, 5, false), veinMat));
+    }
+  }
+
   g.userData.leafMat = leafMat;
   g.userData.veinMat = veinMat;
   enableModelShadows(g, opts.isSoftwareGl);
@@ -87,11 +116,7 @@ export function buildLeafSample(opts: ModelBuildOptions = {}, colorHex = '#22c55
 export function buildPlantSprig(opts: ModelBuildOptions = {}): THREE.Group {
   const g = new THREE.Group();
   const stemMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.5 });
-  const leafMat = new THREE.MeshStandardMaterial({
-    color: 0x22c55e,
-    roughness: 0.35,
-    side: THREE.DoubleSide,
-  });
+  const leafMat = createLeafMaterial(opts, 0x22c55e);
 
   const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.016, 0.42, 10), stemMat);
   stem.position.y = 0.21;

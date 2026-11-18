@@ -19,6 +19,7 @@ import {
   createContactShadowResources,
   disposeSceneResources,
 } from '../../three/render.ts';
+import { createBiologyMaterialLibrary } from '../../three/materials.ts';
 import type { ItemKind, StepAction } from '../constants/bioEnums.ts';
 import { createLabRoom, type LabRoomHandle } from '../three/LabRoom.ts';
 import { buildLabItemModel } from '../three/models/index.ts';
@@ -1474,9 +1475,13 @@ export const Bio3D: React.FC<Bio3DProps> = ({
     const tweens = new TweenManager();
     const dolly = new CameraDollyController(camera, controls);
     const particles = new LabParticleSystem();
+    const materials = createBiologyMaterialLibrary();
     const renderPipeline = createBiologyRenderPipeline(renderer, scene, camera, {
       isSoftwareGl,
-      onQualityChange: (quality) => particles.setQuality(quality),
+      onQualityChange: (quality) => {
+        particles.setQuality(quality);
+        materials.setQuality(quality);
+      },
     });
     const contactShadows = createContactShadowResources();
     scene.add(particles.mesh);
@@ -1500,6 +1505,7 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       const grp = buildLabItemModel(item, {
         isSoftwareGl,
         specimenPreset: experiment.specimenPreset,
+        materials,
       });
       const pos = basePositions.get(item.id) ?? new THREE.Vector3(0, 0, 0);
       grp.position.copy(pos);
@@ -2020,6 +2026,7 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       room.dispose();
       renderPipeline.dispose();
       contactShadows.dispose();
+      materials.dispose();
       disposeSceneResources(scene);
       renderer.dispose();
     };

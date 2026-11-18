@@ -8,7 +8,7 @@ import {
 
 export function buildDropper(opts: ModelBuildOptions = {}, liquidHex = '#38bdf8'): THREE.Group {
   const g = new THREE.Group();
-  const glassMat = createGlassMaterial(opts.isSoftwareGl, 0xe0f2fe, 0.44);
+  const glassMat = createGlassMaterial(opts, 0xe0f2fe, 0.44);
 
   // Small stand cradle so it rests clearly on the bench
   const holder = new THREE.Mesh(
@@ -77,7 +77,7 @@ export function buildPipette(opts: ModelBuildOptions = {}, liquidHex = '#0ea5e9'
 
   const tip = new THREE.Mesh(
     new THREE.ConeGeometry(0.014, 0.11, 12),
-    createGlassMaterial(opts.isSoftwareGl, new THREE.Color(liquidHex).getHex(), 0.55),
+    createGlassMaterial(opts, new THREE.Color(liquidHex).getHex(), 0.55),
   );
   tip.rotation.x = Math.PI;
   tip.position.y = 0.05;
@@ -137,7 +137,7 @@ export function buildStainBottle(
 
   const stem = new THREE.Mesh(
     new THREE.CylinderGeometry(0.011, 0.007, 0.18, 10),
-    createGlassMaterial(opts.isSoftwareGl, col.getHex(), 0.58),
+    createGlassMaterial(opts, col.getHex(), 0.58),
   );
   stem.position.y = -0.09;
   dropperAssembly.add(stem);
@@ -165,7 +165,7 @@ export function buildReagentBottle(
   labelText = 'SOLUTION',
 ): THREE.Group {
   const g = new THREE.Group();
-  const glassMat = createGlassMaterial(opts.isSoftwareGl, 0xe0f2fe, 0.42);
+  const glassMat = createGlassMaterial(opts, 0xe0f2fe, 0.42);
 
   const body = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.135, 0.3, 22), glassMat);
   body.position.y = 0.15;
@@ -234,7 +234,7 @@ export function buildForceps(opts: ModelBuildOptions = {}): THREE.Group {
 export function buildDissectingNeedle(opts: ModelBuildOptions = {}): THREE.Group {
   const g = new THREE.Group();
   const handleMat = new THREE.MeshStandardMaterial({ color: 0x0d7a5f, roughness: 0.45 });
-  const steelMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.9, roughness: 0.14 });
+  const steelMat = opts.materials?.metal(0xf1f5f9, 0.9, 0.14) ?? new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.9, roughness: 0.14 });
 
   const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.22, 14), handleMat);
   handle.rotation.x = Math.PI / 2;
@@ -449,7 +449,7 @@ export function buildThermometer(opts: ModelBuildOptions = {}): THREE.Group {
 
 export function buildPotometer(opts: ModelBuildOptions = {}): THREE.Group {
   const g = new THREE.Group();
-  const glassMat = createGlassMaterial(opts.isSoftwareGl, 0xe0f2fe, 0.44);
+  const glassMat = createGlassMaterial(opts, 0xe0f2fe, 0.44);
 
   const stand = new THREE.Mesh(
     new THREE.BoxGeometry(0.55, 0.04, 0.22),

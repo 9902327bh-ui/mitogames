@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { PhotosynthesisReading } from '../../utils/photosynthesisRate.ts';
 import {
   createGlassMaterial,
+  createLeafMaterial,
   enableModelShadows,
   makeCanvasLabelTexture,
   type ModelBuildOptions,
@@ -177,7 +178,7 @@ export function buildPhotosynthesisChamber(opts: ModelBuildOptions = {}): THREE.
   // Glass cylinder tank
   const glassTank = new THREE.Mesh(
     new THREE.CylinderGeometry(0.29, 0.29, 0.68, 24, 1, true),
-    createGlassMaterial(opts.isSoftwareGl, 0xe0f2fe, 0.34),
+    createGlassMaterial(opts, 0xe0f2fe, 0.34),
   );
   glassTank.position.y = 0.4;
   g.add(glassTank);
@@ -222,7 +223,7 @@ export function buildPhotosynthesisChamber(opts: ModelBuildOptions = {}): THREE.
   submergedWeed.visible = false;
 
   const weedStemMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.45 });
-  const weedLeafMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.38 });
+  const weedLeafMat = createLeafMaterial(opts, 0x22c55e);
   const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.42, 8), weedStemMat);
   stem.position.y = 0.21;
   submergedWeed.add(stem);
@@ -239,7 +240,7 @@ export function buildPhotosynthesisChamber(opts: ModelBuildOptions = {}): THREE.
   // Inverted glass funnel cap catching bubbles
   const funnel = new THREE.Mesh(
     new THREE.ConeGeometry(0.12, 0.14, 16, 1, true),
-    createGlassMaterial(opts.isSoftwareGl, 0xe0f2fe, 0.42),
+    createGlassMaterial(opts, 0xe0f2fe, 0.42),
   );
   funnel.position.y = 0.48;
   submergedWeed.add(funnel);
@@ -289,7 +290,7 @@ export function buildLampSwitch(opts: ModelBuildOptions = {}): THREE.Group {
   g.add(ruler);
 
   // Stand & shade aimed toward the chamber
-  const metalMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.7, roughness: 0.25 });
+  const metalMat = opts.materials?.metal(0x94a3b8, 0.7, 0.25) ?? new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.7, roughness: 0.25 });
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.024, 0.62, 10), metalMat);
   pole.position.set(-0.04, 0.34, -0.04);
   const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.26, 10), metalMat);

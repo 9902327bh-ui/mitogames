@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { enableModelShadows, makeCanvasLabelTexture, type ModelBuildOptions } from './shared.ts';
+import { createLeafMaterial, createOrganicMaterial, enableModelShadows, makeCanvasLabelTexture, type ModelBuildOptions } from './shared.ts';
 
 export function buildHeartModel(opts: ModelBuildOptions = {}): THREE.Group {
   const g = new THREE.Group();
@@ -15,18 +15,8 @@ export function buildHeartModel(opts: ModelBuildOptions = {}): THREE.Group {
   heartBody.position.y = 0.42;
 
   // Blue right atrium/ventricle + Red left atrium/ventricle
-  const rightMat = new THREE.MeshStandardMaterial({
-    color: 0x2563eb,
-    roughness: 0.32,
-    emissive: 0x1d4ed8,
-    emissiveIntensity: 0.12,
-  });
-  const leftMat = new THREE.MeshStandardMaterial({
-    color: 0xdc2626,
-    roughness: 0.32,
-    emissive: 0xb91c1c,
-    emissiveIntensity: 0.15,
-  });
+  const rightMat = createOrganicMaterial(opts, 0x2563eb, 0.32);
+  const leftMat = createOrganicMaterial(opts, 0xdc2626, 0.32);
 
   const rightChamber = new THREE.Mesh(new THREE.SphereGeometry(0.16, 20, 16), rightMat);
   rightChamber.scale.set(0.85, 1.28, 0.88);
@@ -67,6 +57,17 @@ export function buildHeartModel(opts: ModelBuildOptions = {}): THREE.Group {
   valveR.position.set(-0.08, 0.07, 0.15);
   heartBody.add(valveL, valveR);
 
+  // Fine surface vessels give the chambers a soft anatomical cue without changing their pivot.
+  const coronaryMat = createOrganicMaterial(opts, 0xfda4af, 0.28);
+  const coronaryCurves = [
+    [[-0.11, 0.02, 0.148], [-0.03, 0.07, 0.155], [0.02, 0.03, 0.16], [0.11, 0.09, 0.148]],
+    [[0.02, 0.03, 0.16], [0.02, -0.04, 0.16], [-0.02, -0.1, 0.145]],
+  ];
+  coronaryCurves.forEach((points, index) => {
+    const curve = new THREE.CatmullRomCurve3(points.map(([x, y, z]) => new THREE.Vector3(x, y, z)));
+    heartBody.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 18, index ? 0.006 : 0.008, 7, false), coronaryMat));
+  });
+
   g.add(heartBody);
   g.userData.heartBody = heartBody;
   g.userData.rightChamber = rightChamber;
@@ -80,12 +81,7 @@ export function buildHeartModel(opts: ModelBuildOptions = {}): THREE.Group {
 export function buildLungModel(opts: ModelBuildOptions = {}): THREE.Group {
   const g = new THREE.Group();
   const trachMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4 });
-  const lungMat = new THREE.MeshStandardMaterial({
-    color: 0xf472b6,
-    roughness: 0.45,
-    emissive: 0xdb2777,
-    emissiveIntensity: 0.08,
-  });
+  const lungMat = createOrganicMaterial(opts, 0xf472b6, 0.42);
 
   const stand = new THREE.Mesh(
     new THREE.CylinderGeometry(0.22, 0.24, 0.04, 20),
@@ -111,6 +107,11 @@ export function buildLungModel(opts: ModelBuildOptions = {}): THREE.Group {
     lobe.rotation.z = side * -0.14;
     g.add(lobe);
     lobes.push(lobe);
+    const lobelet = new THREE.Mesh(new THREE.SphereGeometry(0.074, 16, 12), lungMat);
+    lobelet.scale.set(0.68, 0.78, 0.72);
+    lobelet.position.set(side * 0.17, 0.24, 0.075);
+    lobelet.rotation.z = side * -0.18;
+    g.add(lobelet);
   });
 
   g.userData.lungLobes = lobes;
@@ -121,7 +122,7 @@ export function buildLungModel(opts: ModelBuildOptions = {}): THREE.Group {
 export function buildDigestiveModel(opts: ModelBuildOptions = {}): THREE.Group {
   const g = new THREE.Group();
   const tubeMat = new THREE.MeshStandardMaterial({ color: 0xfb923c, roughness: 0.45 });
-  const stomachMat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.4 });
+  const stomachMat = createOrganicMaterial(opts, 0xf43f5e, 0.4);
 
   const stand = new THREE.Mesh(
     new THREE.CylinderGeometry(0.2, 0.22, 0.04, 18),
@@ -242,7 +243,7 @@ export function buildPlantVascularModel(opts: ModelBuildOptions = {}): THREE.Gro
   g.add(phloemTube);
 
   // Leaf canopy top
-  const leafMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.38 });
+  const leafMat = createLeafMaterial(opts, 0x22c55e);
   [-1, 0, 1].forEach((idx) => {
     const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), leafMat);
     leaf.scale.set(1.3, 0.28, 0.85);
@@ -367,11 +368,7 @@ export function buildOrganPart(opts: ModelBuildOptions = {}, colorHex = '#ef4444
   pad.position.y = 0.015;
   g.add(pad);
 
-  const organMat = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(colorHex),
-    roughness: 0.35,
-    metalness: 0.05,
-  });
+  const organMat = createOrganicMaterial(opts, new THREE.Color(colorHex), 0.35);
   const chamber = new THREE.Mesh(new THREE.TorusKnotGeometry(0.085, 0.028, 48, 8, 2, 3), organMat);
   chamber.position.y = 0.16;
   g.add(chamber);
