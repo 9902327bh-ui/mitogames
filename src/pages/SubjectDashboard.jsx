@@ -61,18 +61,22 @@ export default function SubjectDashboard({ subject = 'biology' }) {
   const [ytLoading, setYtLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [readyMade, setReadyMade] = useState([]);
+  const [readyMadeLoading, setReadyMadeLoading] = useState(true);
   const [loadingMessage, setLoadingMessage] = useState('');
 
   useEffect(() => {
-    if (!isBio) {
-      fetch(`${isBio ? '/api/biology/experiments/ready-made' : '/api/experiments/ready-made'}?classLevel=${encodeURIComponent(user?.grade || 8)}`)
-        .then(async response => {
-          if (!response.ok) throw new Error('Ready-made experiments are unavailable.');
-          const data = await response.json();
-          setReadyMade(Array.isArray(data.experiments) ? data.experiments : []);
-        })
-        .catch(() => setReadyMade([]));
-    }
+    let active = true;
+    setReadyMadeLoading(true);
+    setReadyMade([]);
+    fetch(`${isBio ? '/api/biology/experiments/ready-made' : '/api/experiments/ready-made'}?classLevel=${encodeURIComponent(user?.grade || 8)}`)
+      .then(async response => {
+        if (!response.ok) throw new Error('Ready-made experiments are unavailable.');
+        const data = await response.json();
+        if (active) setReadyMade(Array.isArray(data.experiments) ? data.experiments : []);
+      })
+      .catch(() => { if (active) setReadyMade([]); })
+      .finally(() => { if (active) setReadyMadeLoading(false); });
+    return () => { active = false; };
   }, [isBio, user?.grade]);
 
   if (!user) { navigate('/login'); return null; }
@@ -298,7 +302,7 @@ export default function SubjectDashboard({ subject = 'biology' }) {
                 <span style={{ fontSize:'.82rem', fontWeight:800, color:isBio?'#16A34A':'#6D28D9' }}>{isBio ? `Launch ${experiment.sceneKind} lab →` : electro ? 'Launch Electro3D →' : 'Launch Lab3D →'}</span>
               </button>;
             })}
-          </div> : <p style={{ color:'var(--text-secondary)' }}>Loading experiments…</p>}
+          </div> : <p style={{ color:'var(--text-secondary)' }}>{readyMadeLoading ? 'Loading ready-made labs…' : 'No ready-made labs were returned. Check the API connection and your selected grade.'}</p>}
         </section>
 
         {/* Topics Grid */}

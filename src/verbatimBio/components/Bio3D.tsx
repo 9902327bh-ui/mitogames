@@ -689,7 +689,7 @@ export const Bio3D: React.FC<Bio3DProps> = ({
         animDuration = 2.6;
         if (action === 'add_water') {
           refs.room.setFaucetRunning(true);
-          refs.tweens.after(1.2, () => refs.room.setFaucetRunning(false));
+          refs.tweens.after(2.0, () => refs.room.setFaucetRunning(false));
         }
         const dropTarget =
           simStateRef.current.slideMounted && microGrp
@@ -939,6 +939,8 @@ export const Bio3D: React.FC<Bio3DProps> = ({
         });
       } else if (action === 'pump_water') {
         animDuration = 2.4;
+        refs.room.setFaucetRunning(true);
+        refs.tweens.after(2.0, () => refs.room.setFaucetRunning(false));
         const pipeGrp = targetGrp ?? findByKind('xylem_pipe');
         simStateRef.current.xylemBeadsActive = true;
         refs.tweens.add({
@@ -2240,7 +2242,7 @@ export const Bio3D: React.FC<Bio3DProps> = ({
       </div>
 
       {/* Centered Circular Microscope Cell View Viewport */}
-      {showCellViewModal && phase !== 'science_note' && phase !== 'completed' && (
+      {showCellViewModal && (
         <EyepieceCanvas
           preset={experiment.specimenPreset ?? 'onion_peel'}
           magnification={eyepieceZoom}

@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { createTapWater } from './tapWater.ts';
+import { installLabModels } from './assets.ts';
 
 export interface LabRoomHandle {
   group: THREE.Group;
@@ -381,21 +383,9 @@ export function createLabRoom(
   tapHandle.position.set(0.11, 0.06, -0.28);
   sinkGroup.add(tapHandle);
 
-  const faucetStreamMat = track(
-    new THREE.MeshPhysicalMaterial({
-      color: 0x7dd3fc,
-      transparent: true,
-      opacity: 0.72,
-      roughness: 0.1,
-    }),
-  );
-  const faucetStreamMesh = new THREE.Mesh(
-    track(new THREE.CylinderGeometry(0.011, 0.016, 0.26, 10)),
-    faucetStreamMat,
-  );
-  faucetStreamMesh.position.set(0, 0.12, 0.02);
-  faucetStreamMesh.visible = false;
-  sinkGroup.add(faucetStreamMesh);
+  // Running water: stream + splash + ripples + turning handle + sound (also reused by the GLB sink)
+  const water = createTapWater(group, new THREE.Vector3(3.25, 0.26, -0.73), 0.035);
+  water.setHandle(tapHandle);
   group.add(sinkGroup);
 
   // 3. Muted Contrast Studio Back Wall + Warm Wood Wainscoting + Framed Posters + Shelf + Plants
@@ -534,29 +524,37 @@ export function createLabRoom(
   const dustMotes = new THREE.Points(moteGeom, moteMat);
   group.add(dustMotes);
 
+  const cleanupModels = installLabModels({
+    group,
+    isSoftwareGl,
+    benchTop,
+    cabinetBase,
+    sinkGroup,
+    floor,
+    benchPlants,
+    water,
+  });
+
   scene.add(group);
 
   return {
     group,
     pmremTarget: envTex,
-    faucetStreamMesh,
+    faucetStreamMesh: water.stream,
     dustMotes,
     benchPlants,
-    setFaucetRunning: (running: boolean) => {
-      faucetStreamMesh.visible = running;
-    },
+    setFaucetRunning: (running: boolean) => water.setRunning(running),
     update: (timeSec: number) => {
       // Gentle idle plant sway + slow floating sunlight dust motes
       benchPlants.forEach((p, idx) => {
         p.rotation.z = Math.sin(timeSec * 0.9 + idx * 1.4) * 0.025;
       });
       dustMotes.position.y = Math.sin(timeSec * 0.4) * 0.04;
-      if (faucetStreamMesh.visible) {
-        faucetStreamMesh.scale.x = 0.92 + Math.sin(timeSec * 22) * 0.08;
-        faucetStreamMesh.scale.z = 0.92 + Math.cos(timeSec * 22) * 0.08;
-      }
+      water.update(timeSec);
     },
     dispose: () => {
+      cleanupModels();
+      water.dispose();
       envTex.dispose();
       disposables.forEach((d) => d.dispose());
     },

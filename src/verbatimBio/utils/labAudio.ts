@@ -292,6 +292,41 @@ class LabAudioEngine {
     osc.start(now);
     osc.stop(now + 0.18);
   }
+
+  private waterNodes: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
+
+  startWater() {
+    const ctx = this.getContext();
+    if (!ctx || this.waterNodes) return;
+    const len = ctx.sampleRate * 2;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 1800;
+    filter.Q.value = 0.6;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.25);
+    src.connect(filter).connect(gain).connect(ctx.destination);
+    src.start();
+    this.waterNodes = { src, gain };
+  }
+
+  stopWater() {
+    const n = this.waterNodes;
+    if (!n || !this.ctx) return;
+    this.waterNodes = null;
+    const now = this.ctx.currentTime;
+    n.gain.gain.cancelScheduledValues(now);
+    n.gain.gain.setValueAtTime(n.gain.gain.value, now);
+    n.gain.gain.linearRampToValueAtTime(0, now + 0.25);
+    n.src.stop(now + 0.3);
+  }
 }
 
 export const labAudio = new LabAudioEngine();

@@ -463,7 +463,7 @@ export const EyepieceCanvas: React.FC<EyepieceCanvasProps> = ({
   if (centeredModal) {
     return (
       <div
-        className="fixed inset-0 z-30 bg-[#0B1D14]/45 flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 bg-[#0B1D14]/45 flex items-center justify-center p-4"
         role="dialog"
         aria-modal="true"
       >
